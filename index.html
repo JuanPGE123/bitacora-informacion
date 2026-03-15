@@ -6,8 +6,18 @@
   <base href="/bitacora-informacion/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- Script para manejar redirección desde 404.html en GitHub Pages -->
+  <script>
+    (function(){
+      var redirect = sessionStorage.redirect;
+      delete sessionStorage.redirect;
+      if (redirect && redirect != location.href) {
+        history.replaceState(null, null, redirect);
+      }
+    })();
+  </script>
 <style>*{margin:0;padding:0;box-sizing:border-box}:root{--primary:#4f46e5;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#3b82f6;--secondary:#6b7280}body{font-family:Segoe UI,Tahoma,Geneva,Verdana,sans-serif;font-size:14px;line-height:1.5;color:#1f2937;background:#f3f4f6;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}</style><link rel="stylesheet" href="styles.e76edcbe5b336a35.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="styles.e76edcbe5b336a35.css"></noscript></head>
 <body>
   <app-root></app-root>
-<script src="runtime.054d6307793e3741.js" type="module"></script><script src="polyfills.2a25f9493dfd665a.js" type="module"></script><script src="main.64ac41f20a01c9d8.js" type="module"></script></body>
+<script src="runtime.054d6307793e3741.js" type="module"></script><script src="polyfills.2a25f9493dfd665a.js" type="module"></script><script src="main.4d0668160c04436b.js" type="module"></script></body>
 </html>
