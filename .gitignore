@@ -3,6 +3,7 @@ node_modules/
 dist/
 tmp/
 out-tsc/
+.angular/
 
 # IDE
 .idea/
