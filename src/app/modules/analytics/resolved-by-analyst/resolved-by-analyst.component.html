@@ -1,12 +1,22 @@
 <div class="page-container">
   <div class="page-header">
     <h1>Incidentes Resueltos por Analista y Fecha</h1>
-    <p class="subtitle">Vista agrupada por analista y fecha de cierre</p>
+    <p class="subtitle">Vista agrupada por analista y fecha de solución</p>
   </div>
 
   <!-- Mensaje de copiado -->
   <div class="copy-message" *ngIf="copiedMessage">
     ✅ {{ copiedMessage }}
+  </div>
+
+  <!-- Gráficas -->
+  <div class="charts-container">
+    <div class="chart-card">
+      <canvas #analystChart></canvas>
+    </div>
+    <div class="chart-card">
+      <canvas #dateChart></canvas>
+    </div>
   </div>
 
   <div class="analyst-groups">
@@ -31,7 +41,7 @@
               <th>No. Incidente</th>
               <th>External Ticket</th>
               <th>Fecha Apertura</th>
-              <th>Fecha Cierre</th>
+              <th>Fecha Solución</th>
               <th>Prioridad</th>
             </tr>
           </thead>
@@ -40,7 +50,7 @@
               <td>{{ incident.incidentNumber }}</td>
               <td>{{ incident.externalTicket || 'Sin External Ticket' }}</td>
               <td>{{ formatDate(incident.openDate) }}</td>
-              <td>{{ incident.closeDate ? formatDate(incident.closeDate) : '-' }}</td>
+              <td>{{ incident.solutionDate ? formatDate(incident.solutionDate) : '-' }}</td>
               <td>
                 <span class="priority-badge" [class]="'priority-' + incident.priority.toLowerCase()">
                   {{ incident.priority }}

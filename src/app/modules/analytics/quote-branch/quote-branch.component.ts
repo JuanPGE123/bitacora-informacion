@@ -33,10 +33,13 @@ export class QuoteBranchComponent implements OnInit {
       const validIncidents = incidents.filter(incident => {
         const group = incident.assignedGroup || '';
         const analyst = incident.assignedAnalyst || '';
+        const externalTicket = incident.externalTicket || '';
         return !group.toUpperCase().includes('AVA') && 
                !group.toUpperCase().includes('AUS') &&
                !analyst.toUpperCase().includes('AVA') &&
-               !analyst.toUpperCase().includes('AUS');
+               !analyst.toUpperCase().includes('AUS') &&
+               !externalTicket.toUpperCase().startsWith('AVA') &&
+               !externalTicket.toUpperCase().startsWith('AUS');
       });
 
       const branches = new Map<string, Incident[]>();
