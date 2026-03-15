@@ -71,11 +71,11 @@ export class ResolvedByAnalystComponent implements OnInit, AfterViewInit {
           };
         })
         .sort((a, b) => {
-          // Ordenar por analista y luego por fecha (más reciente primero)
-          if (a.analyst !== b.analyst) {
-            return a.analyst.localeCompare(b.analyst);
+          // Ordenar por fecha (más reciente primero) y luego por analista
+          if (a.date !== b.date) {
+            return b.date.localeCompare(a.date);
           }
-          return b.date.localeCompare(a.date);
+          return a.analyst.localeCompare(b.analyst);
         });
       
       // Crear gráficas después de cargar los datos
