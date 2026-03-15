@@ -1,30 +1,14 @@
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AnalyticsService } from '../../../core/services/analytics.service';
-import { ExportService } from '../../../core/services/export.service';
 import { IncidentService } from '../../../core/services/incident.service';
-import { KpiService } from '../../../core/services/kpi.service';
-import { Chart, ChartConfiguration, registerables } from 'chart.js';
-import { Incident, IncidentPriority } from '../../../core/models/incident.model';
+import { Incident } from '../../../core/models/incident.model';
 
-// Registrar componentes de Chart.js
-Chart.register(...registerables);
-
-interface AnalystGroup {
-  analyst: string;
-  incidents: Incident[];
+interface ExternalTicketGroup {
+  ticketName: string;
   count: number;
+  incidents: Incident[];
   expanded: boolean;
 }
-
-interface QuoteBranch {
-  branch: string;
-  incidents: Incident[];
-  count: number;
-  expanded: boolean;
-}
-
-type ViewMode = 'charts' | 'by-analyst' | 'main-queues' | 'other-analysts' | 'quote-branch';
 
 @Component({
   selector: 'app-open-incidents-analytics',
@@ -33,171 +17,149 @@ type ViewMode = 'charts' | 'by-analyst' | 'main-queues' | 'other-analysts' | 'qu
   templateUrl: './open-incidents-analytics.component.html',
   styleUrls: ['./open-incidents-analytics.component.scss']
 })
-export class OpenIncidentsAnalyticsComponent implements OnInit, AfterViewInit {
-  @ViewChild('priorityChart') priorityChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('analystChart') analystChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('agingChart') agingChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('slaChart') slaChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('categoryChart') categoryChartRef!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('trendChart') trendChartRef!: ElementRef<HTMLCanvasElement>;
-
-  private charts: Chart[] = [];
-  dataLoaded = false;
+export class OpenIncidentsAnalyticsComponent implements OnInit {
+  // Contadores de External Ticket
+  incidentsWithExternalTicket: number = 0;
+  incidentsWithoutExternalTicket: number = 0;
   
-  // Modo de vista actual
-  currentView: ViewMode = 'charts';
+  // Agrupación por External Ticket
+  externalTicketGroups: ExternalTicketGroup[] = [];
   
-  // KPIs de incidentes abiertos
-  totalOpen = 0;
-  criticalCount = 0;
-  averageAge = 0;
-  slaAtRisk = 0;
-
-  // Datos para vista por analista
-  analystGroups: AnalystGroup[] = [];
+  // Incidentes Dynatrace
+  dynatraceIncidents: Incident[] = [];
+  dynatraceCount: number = 0;
+  dynatraceExpanded: boolean = false;
   
-  // Datos para bandejas principales
-  mainQueueNames = [
-    'Soporte Plataforma Automatización de Procesos',
-    'Soporte Aus',
-    'Soporte AVA'
-  ];
-  mainQueuesIncidents: Incident[] = [];
-  otherAnalystsIncidents: Incident[] = [];
+  // Incidentes con ANS >= 66.5
+  highSLAIncidents: Incident[] = [];
+  highSLACount: number = 0;
+  highSLAExpanded: boolean = false;
   
-  // Datos para cotizador por ramo
-  quoteBranches: QuoteBranch[] = [];
-
   copiedMessage: string = '';
 
-  constructor(
-    private analyticsService: AnalyticsService,
-    private exportService: ExportService,
-    private incidentService: IncidentService,
-    private kpiService: KpiService
-  ) {}
+  constructor(private incidentService: IncidentService) {}
 
   ngOnInit(): void {
-    this.loadKPIs();
-    this.loadAnalystGroups();
-    this.loadMainQueuesData();
-    this.loadQuoteBranchData();
+    this.loadAnalytics();
   }
 
-  ngAfterViewInit(): void {
-    // Esperar un tick para asegurar que las vistas estén listas
-    setTimeout(() => {
-      if (this.currentView === 'charts') {
-        this.loadCharts();
-      }
-    }, 100);
-  }
-
-  setView(view: ViewMode): void {
-    this.currentView = view;
-    // Limpiar gráficos si cambiamos de vista
-    if (view !== 'charts' && this.charts.length > 0) {
-      this.charts.forEach(chart => chart.destroy());
-      this.charts = [];
-    }
-    // Cargar gráficos si volvemos a la vista de charts
-    if (view === 'charts') {
-      setTimeout(() => this.loadCharts(), 100);
-    }
-  }
-
-  loadAnalystGroups(): void {
+  loadAnalytics(): void {
     this.incidentService.getOpenIncidentsObservable().subscribe(incidents => {
-      const groups = new Map<string, Incident[]>();
+      // 1. Contadores de External Ticket
+      this.incidentsWithExternalTicket = incidents.filter(i => i.externalTicket && i.externalTicket.trim() !== '').length;
+      this.incidentsWithoutExternalTicket = incidents.filter(i => !i.externalTicket || i.externalTicket.trim() === '').length;
       
+      // 2. Agrupar por External Ticket
+      const ticketGroups = new Map<string, Incident[]>();
       incidents.forEach(incident => {
-        const analyst = incident.assignedAnalyst || 'Sin Asignar';
-        if (!groups.has(analyst)) {
-          groups.set(analyst, []);
+        const ticket = incident.externalTicket?.trim();
+        if (ticket) {
+          if (!ticketGroups.has(ticket)) {
+            ticketGroups.set(ticket, []);
+          }
+          ticketGroups.get(ticket)!.push(incident);
         }
-        groups.get(analyst)!.push(incident);
-      });
-
-      this.analystGroups = Array.from(groups.entries())
-        .map(([analyst, incidents]) => ({
-          analyst,
-          incidents: incidents.sort((a, b) => 
-            new Date(a.openDate).getTime() - new Date(b.openDate).getTime()
-          ),
-          count: incidents.length,
-          expanded: false
-        }))
-        .sort((a, b) => b.count - a.count);
-    });
-  }
-
-  loadMainQueuesData(): void {
-    this.incidentService.getOpenIncidentsObservable().subscribe(incidents => {
-      this.mainQueuesIncidents = incidents.filter(incident => {
-        const group = incident.assignedGroup || '';
-        return this.mainQueueNames.some(queueName => group.includes(queueName));
       });
       
-      this.otherAnalystsIncidents = incidents.filter(incident => {
-        const group = incident.assignedGroup || '';
-        return !this.mainQueueNames.some(queueName => group.includes(queueName));
-      });
-    });
-  }
-
-  loadQuoteBranchData(): void {
-    this.incidentService.getOpenIncidentsObservable().subscribe(incidents => {
-      // Filtrar incidentes que NO sean de Soporte Aus o Soporte AVA
-      const validIncidents = incidents.filter(incident => {
-        const group = incident.assignedGroup || '';
-        return !group.includes('Soporte Aus') && !group.includes('Soporte AVA');
-      });
-
-      const branches = new Map<string, Incident[]>();
-
-      validIncidents.forEach(incident => {
-        const description = incident.description || '';
-        let branch = 'Otros';
-
-        // Buscar códigos numéricos en la descripción
-        if (description.includes('040') || description.includes('900') || description.includes('800')) {
-          branch = 'Incidentes Cotizador Autos';
-        } else if (description.includes('080') || description.includes('081')) {
-          branch = 'Incidentes Cotizador Plan Vive/PCP';
-        } else if (description.includes('083') || description.includes('099')) {
-          branch = 'Incidentes Cotizador Vida Grupo PES / Ingreso Digital';
-        } else if (description.includes('084')) {
-          branch = 'Incidentes Cotizador Accidentes Personales';
-        } else if (description.includes('090')) {
-          branch = 'Incidentes Cotizador Salud';
-        } else if (description.includes('193')) {
-          branch = 'Incidentes Cotizador Pensión';
-        } else if (description.includes('196')) {
-          branch = 'Incidentes Cotizador Educación';
-        }
-
-        if (!branches.has(branch)) {
-          branches.set(branch, []);
-        }
-        branches.get(branch)!.push(incident);
-      });
-
-      this.quoteBranches = Array.from(branches.entries())
-        .map(([branch, incidents]) => ({
-          branch,
-          incidents: incidents.sort((a, b) => 
-            new Date(a.openDate).getTime() - new Date(b.openDate).getTime()
-          ),
+      this.externalTicketGroups = Array.from(ticketGroups.entries())
+        .map(([ticketName, incidents]) => ({
+          ticketName,
           count: incidents.length,
+          incidents: incidents.sort((a, b) => 
+            (a.incidentNumber || '').localeCompare(b.incidentNumber || '')
+          ),
           expanded: false
         }))
         .sort((a, b) => b.count - a.count);
+      
+      // 3. Filtrar incidentes Dynatrace
+      this.dynatraceIncidents = incidents.filter(i => 
+        i.operationalCategory2?.trim().toLowerCase() === 'dynatrace'
+      ).sort((a, b) => (a.incidentNumber || '').localeCompare(b.incidentNumber || ''));
+      this.dynatraceCount = this.dynatraceIncidents.length;
+      
+      // 4. Filtrar incidentes con ANS >= 66.5
+      this.highSLAIncidents = incidents.filter(i => 
+        i.slaTime !== undefined && i.slaTime >= 66.5
+      ).sort((a, b) => (b.slaTime || 0) - (a.slaTime || 0));
+      this.highSLACount = this.highSLAIncidents.length;
     });
   }
 
-  toggleAnalystGroup(group: AnalystGroup): void {
+  toggleTicketGroup(group: ExternalTicketGroup): void {
     group.expanded = !group.expanded;
   }
+
+  toggleDynatrace(): void {
+    this.dynatraceExpanded = !this.dynatraceExpanded;
+  }
+
+  toggleHighSLA(): void {
+    this.highSLAExpanded = !this.highSLAExpanded;
+  }
+
+  copyDynatraceIncidents(): void {
+    const text = this.formatIncidentsForCopy(this.dynatraceIncidents);
+    this.copyToClipboard(text, 'Incidentes Dynatrace copiados');
+  }
+
+  copyHighSLAIncidents(): void {
+    const incidents = this.highSLAIncidents.map(i => ({
+      incident: i.incidentNumber,
+      analyst: i.assignedAnalyst || 'Sin Asignar',
+      slaTime: i.slaTime || 0
+    }));
+    
+    let text = '| No. Incidente | Analista Asignado | Tiempo ANS |\n';
+    text += '|---------------|-------------------|------------|\n';
+    incidents.forEach(item => {
+      text += `| ${item.incident} | ${item.analyst} | ${item.slaTime.toFixed(2)} |\n`;
+    });
+    
+    this.copyToClipboard(text, 'Incidentes con ANS >= 66.5 copiados');
+  }
+
+  copyTicketGroupIncidents(group: ExternalTicketGroup): void {
+    const text = this.formatIncidentsForCopy(group.incidents);
+    this.copyToClipboard(text, `Incidentes de ${group.ticketName} copiados`);
+  }
+
+  private formatIncidentsForCopy(incidents: Incident[]): string {
+    let text = '| No. Incidente | External Ticket | Fecha Apertura | Analista | Prioridad |\n';
+    text += '|---------------|-----------------|----------------|----------|----------|\n';
+    incidents.forEach(incident => {
+      const ticket = incident.externalTicket || 'Sin External Ticket';
+      const openDate = this.formatDate(incident.openDate);
+      const analyst = incident.assignedAnalyst || 'Sin Asignar';
+      text += `| ${incident.incidentNumber} | ${ticket} | ${openDate} | ${analyst} | ${incident.priority} |\n`;
+    });
+    return text;
+  }
+
+  formatDate(date: Date): string {
+    if (!date) return '-';
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  private copyToClipboard(text: string, message: string): void {
+    navigator.clipboard.writeText(text).then(() => {
+      this.copiedMessage = message;
+      setTimeout(() => {
+        this.copiedMessage = '';
+      }, 3000);
+    }).catch(err => {
+      console.error('Error al copiar:', err);
+      this.copiedMessage = 'Error al copiar';
+      setTimeout(() => {
+        this.copiedMessage = '';
+      }, 3000);
+    });
+  }
+}
 
   toggleQuoteBranch(branch: QuoteBranch): void {
     branch.expanded = !branch.expanded;
