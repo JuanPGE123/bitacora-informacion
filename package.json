@@ -2,6 +2,9 @@
   "name": "incident-analytics-dashboard",
   "version": "1.0.0",
   "description": "Sistema de análisis de incidentes tipo mini BI con Angular",
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
