@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
 import { IncidentService } from '../../../core/services/incident.service';
-import { Incident } from '../../../core/models/incident.model';
+import { NotionService, AnalystNotionData } from '../../../core/services/notion.service';
+import { Incident, IncidentPriority } from '../../../core/models/incident.model';
 
 interface AnalystGroup {
   analyst: string;
@@ -13,15 +15,19 @@ interface AnalystGroup {
 @Component({
   selector: 'app-by-analyst',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, HttpClientModule],
   templateUrl: './by-analyst.component.html',
   styleUrls: ['./by-analyst.component.scss']
 })
 export class ByAnalystComponent implements OnInit {
   analystGroups: AnalystGroup[] = [];
   copiedMessage: string = '';
+  isSyncingNotion: boolean = false;
 
-  constructor(private incidentService: IncidentService) {}
+  constructor(
+    private incidentService: IncidentService,
+    private notionService: NotionService
+  ) {}
 
   ngOnInit(): void {
     this.loadAnalystGroups();
@@ -59,6 +65,53 @@ export class ByAnalystComponent implements OnInit {
   copyAnalystIncidents(group: AnalystGroup): void {
     const text = this.formatIncidentsForCopy(group.incidents);
     this.copyToClipboard(text, `Incidentes de ${group.analyst} copiados`);
+  }
+
+  migrateToNotion(): void {
+    if (this.isSyncingNotion) return;
+
+    this.isSyncingNotion = true;
+    this.copiedMessage = '⏳ Migrando a Notion...';
+
+    const analystsData: AnalystNotionData[] = this.analystGroups.map(group => {
+      const priorityCounts = this.getPriorityCounts(group.incidents);
+      return {
+        analyst: group.analyst,
+        totalIncidents: group.count,
+        critical: priorityCounts.critical,
+        high: priorityCounts.high,
+        medium: priorityCounts.medium,
+        low: priorityCounts.low,
+        incidents: group.incidents.map(i => i.incidentNumber || '')
+      };
+    });
+
+    this.notionService.syncAnalystsToNotion(analystsData).subscribe({
+      next: (response) => {
+        this.isSyncingNotion = false;
+        this.copiedMessage = `✅ ${response.message}`;
+        setTimeout(() => {
+          this.copiedMessage = '';
+        }, 5000);
+      },
+      error: (error) => {
+        this.isSyncingNotion = false;
+        console.error('Error al migrar a Notion:', error);
+        this.copiedMessage = '❌ Error al migrar a Notion. Verifica la consola.';
+        setTimeout(() => {
+          this.copiedMessage = '';
+        }, 5000);
+      }
+    });
+  }
+
+  private getPriorityCounts(incidents: Incident[]): { critical: number, high: number, medium: number, low: number } {
+    return {
+      critical: incidents.filter(i => i.priority === IncidentPriority.CRITICAL).length,
+      high: incidents.filter(i => i.priority === IncidentPriority.HIGH).length,
+      medium: incidents.filter(i => i.priority === IncidentPriority.MEDIUM).length,
+      low: incidents.filter(i => i.priority === IncidentPriority.LOW).length
+    };
   }
 
   private formatIncidentsForCopy(incidents: Incident[]): string {
