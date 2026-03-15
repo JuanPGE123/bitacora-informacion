@@ -1,0 +1,53 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Incidentes Cotizador por Ramo</h1>
+    <p class="subtitle">Agrupados por código detectado en la descripción (excluye Soporte Aus y Soporte AVA)</p>
+  </div>
+
+  <!-- Mensaje de copiado -->
+  <div class="copy-message" *ngIf="copiedMessage">
+    ✅ {{ copiedMessage }}
+  </div>
+
+  <div class="branch-groups">
+    <div class="branch-group-card" *ngFor="let branch of quoteBranches">
+      <div class="group-header" (click)="toggleQuoteBranch(branch)">
+        <div class="group-info">
+          <h3>{{ branch.branch }}</h3>
+          <span class="badge">{{ branch.count }} incidente{{ branch.count !== 1 ? 's' : '' }}</span>
+        </div>
+        <div class="group-actions">
+          <button class="btn-copy" (click)="copyBranchIncidents(branch); $event.stopPropagation()">
+            📋 Copiar
+          </button>
+          <span class="expand-icon">{{ branch.expanded ? '▼' : '▶' }}</span>
+        </div>
+      </div>
+
+      <div class="incidents-list" *ngIf="branch.expanded">
+        <table class="incidents-table">
+          <thead>
+            <tr>
+              <th>No. Incidente</th>
+              <th>External Ticket</th>
+              <th>Fecha Apertura</th>
+              <th>Analista</th>
+              <th>Descripción (extracto)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let incident of branch.incidents">
+              <td>{{ incident.incidentNumber }}</td>
+              <td>{{ incident.externalTicket || 'Sin External Ticket' }}</td>
+              <td>{{ formatDate(incident.openDate) }}</td>
+              <td>{{ incident.assignedAnalyst || '-' }}</td>
+              <td class="description-cell">
+                {{ (incident.description || '').substring(0, 100) }}{{ (incident.description || '').length > 100 ? '...' : '' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

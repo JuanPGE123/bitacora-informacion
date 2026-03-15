@@ -1,0 +1,163 @@
+<div class="table-container">
+  <div class="table-header">
+    <h2>{{ title }}</h2>
+    <div class="header-stats">
+      <span class="stat">Total: <strong>{{ pagination.totalItems }}</strong></span>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Buscar por ID, analista o external ticket..."
+      [(ngModel)]="searchText"
+      (ngModelChange)="applyFilters()">
+
+    <select
+      class="filter-select"
+      [(ngModel)]="selectedAnalyst"
+      (ngModelChange)="applyFilters()">
+      <option value="">Todos los analistas</option>
+      <option *ngFor="let analyst of analysts" [value]="analyst">{{ analyst }}</option>
+    </select>
+
+    <select
+      class="filter-select"
+      [(ngModel)]="selectedPriority"
+      (ngModelChange)="applyFilters()">
+      <option value="">Todas las prioridades</option>
+      <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
+    </select>
+
+    <select
+      class="filter-select"
+      [(ngModel)]="selectedExternalTicket"
+      (ngModelChange)="applyFilters()">
+      <option value="">Todos los tickets</option>
+      <option *ngFor="let ticket of externalTickets" [value]="ticket">{{ ticket }}</option>
+    </select>
+
+    <button class="btn-clear-filters" (click)="clearFilters()" *ngIf="searchText || selectedAnalyst || selectedPriority || selectedExternalTicket">
+      Limpiar Filtros
+    </button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrapper">
+    <table class="incident-table">
+      <thead>
+        <tr>
+          <th (click)="sortBy('id')" class="sortable">
+            ID
+            <span class="sort-icon" *ngIf="sortOptions.field === 'id'">
+              {{ sortOptions.direction === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
+          <th (click)="sortBy('analyst')" class="sortable">
+            Analista
+            <span class="sort-icon" *ngIf="sortOptions.field === 'analyst'">
+              {{ sortOptions.direction === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
+          <th (click)="sortBy('priority')" class="sortable">
+            Prioridad
+            <span class="sort-icon" *ngIf="sortOptions.field === 'priority'">
+              {{ sortOptions.direction === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
+          <th (click)="sortBy('externalTicket')" class="sortable">
+            External Ticket
+            <span class="sort-icon" *ngIf="sortOptions.field === 'externalTicket'">
+              {{ sortOptions.direction === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
+          <th (click)="sortBy('status')" class="sortable">
+            Estado
+            <span class="sort-icon" *ngIf="sortOptions.field === 'status'">
+              {{ sortOptions.direction === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
+          <th (click)="sortBy('createdDate')" class="sortable">
+            Fecha Apertura
+            <span class="sort-icon" *ngIf="sortOptions.field === 'createdDate'">
+              {{ sortOptions.direction === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
+          <th *ngIf="showResolved" (click)="sortBy('resolvedDate')" class="sortable">
+            Fecha Resolución
+            <span class="sort-icon" *ngIf="sortOptions.field === 'resolvedDate'">
+              {{ sortOptions.direction === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let incident of displayedIncidents">
+          <td class="incident-id">{{ incident.incidentNumber }}</td>
+          <td>{{ incident.assignedAnalyst || '-' }}</td>
+          <td>
+            <span class="badge" [ngClass]="getPriorityClass(incident.priority)">
+              {{ incident.priority }}
+            </span>
+          </td>
+          <td>{{ incident.externalTicket || 'Sin External Ticket' }}</td>
+          <td>
+            <span class="badge" [ngClass]="getStatusClass(incident.status)">
+              {{ incident.status }}
+            </span>
+          </td>
+          <td>{{ formatDate(incident.openDate) }}</td>
+          <td *ngIf="showResolved">
+            {{ incident.solutionDate ? formatDate(incident.solutionDate) : '-' }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="displayedIncidents.length === 0">
+      <p>No se encontraron incidentes con los filtros aplicados</p>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1">
+    <div class="page-size-selector">
+      <label>Mostrar:</label>
+      <select [(ngModel)]="pagination.pageSize" (ngModelChange)="changePageSize($event)">
+        <option *ngFor="let size of pagination.pageSizeOptions" [value]="size">{{ size }}</option>
+      </select>
+    </div>
+
+    <div class="page-buttons">
+      <button
+        class="page-btn"
+        [disabled]="pagination.page === 0"
+        (click)="changePage(pagination.page - 1)">
+        Anterior
+      </button>
+
+      <button
+        *ngFor="let page of pages"
+        class="page-btn"
+        [class.active]="page === pagination.page"
+        [disabled]="page === -1"
+        (click)="page !== -1 && changePage(page)">
+        {{ page === -1 ? '...' : page + 1 }}
+      </button>
+
+      <button
+        class="page-btn"
+        [disabled]="pagination.page === totalPages - 1"
+        (click)="changePage(pagination.page + 1)">
+        Siguiente
+      </button>
+    </div>
+
+    <div class="page-info">
+      Mostrando {{ (pagination.page * pagination.pageSize) + 1 }} - {{ Math.min((pagination.page + 1) * pagination.pageSize, pagination.totalItems) }} de {{ pagination.totalItems }}
+    </div>
+  </div>
+</div>

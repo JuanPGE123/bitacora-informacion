@@ -1,0 +1,43 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Bandejas Principales</h1>
+    <p class="subtitle">{{ mainQueuesIncidents.length }} incidente{{ mainQueuesIncidents.length !== 1 ? 's' : '' }} en bandejas principales</p>
+    <button class="btn-copy-large" (click)="copyAllIncidents()">
+      📋 Copiar Todos los Incidentes
+    </button>
+  </div>
+
+  <!-- Mensaje de copiado -->
+  <div class="copy-message" *ngIf="copiedMessage">
+    ✅ {{ copiedMessage }}
+  </div>
+
+  <div class="incidents-table-wrapper">
+    <table class="incidents-table">
+      <thead>
+        <tr>
+          <th>No. Incidente</th>
+          <th>External Ticket</th>
+          <th>Fecha Apertura</th>
+          <th>Bandeja</th>
+          <th>Analista</th>
+          <th>Prioridad</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let incident of mainQueuesIncidents">
+          <td>{{ incident.incidentNumber }}</td>
+          <td>{{ incident.externalTicket || 'Sin External Ticket' }}</td>
+          <td>{{ formatDate(incident.openDate) }}</td>
+          <td>{{ incident.assignedGroup || '-' }}</td>
+          <td>{{ incident.assignedAnalyst || '-' }}</td>
+          <td>
+            <span class="priority-badge" [class]="'priority-' + incident.priority.toLowerCase()">
+              {{ incident.priority }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

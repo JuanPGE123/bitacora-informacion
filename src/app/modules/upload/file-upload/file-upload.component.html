@@ -1,0 +1,250 @@
+<div class="file-upload-container">
+  <div class="upload-header">
+    <h1 class="main-title">Carga de Archivos de Incidentes</h1>
+    <p class="main-description">Cargue los archivos de incidentes por separado para mejor organización</p>
+  </div>
+
+  <div class="upload-sections">
+    <!-- SECCIÓN 1: INCIDENTES ABIERTOS -->
+    <div class="upload-card">
+      <h2 class="card-title">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        {{ openIncidentsUpload.title }}
+      </h2>
+      <p class="card-description">{{ openIncidentsUpload.description }}</p>
+
+      <!-- Drop Zone -->
+      <div 
+        class="drop-zone"
+        [class.drag-over]="openIncidentsUpload.dragOver"
+        (dragover)="onOpenDragOver($event)"
+        (dragleave)="onOpenDragLeave($event)"
+        (drop)="onOpenDrop($event)"
+        *ngIf="!openIncidentsUpload.file">
+        
+        <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="12" y1="18" x2="12" y2="12"></line>
+          <line x1="9" y1="15" x2="15" y2="15"></line>
+        </svg>
+
+        <p class="drop-text">Arrastra y suelta tu archivo aquí</p>
+        <p class="drop-subtext">o</p>
+        
+        <label class="file-input-label">
+          <input 
+            type="file" 
+            accept=".csv,.xlsx,.xls"
+            (change)="onOpenFileSelected($event)"
+            class="file-input">
+          Seleccionar Archivo
+        </label>
+
+        <p class="supported-formats">CSV, Excel (.xlsx, .xls)</p>
+      </div>
+
+      <!-- Selected File Info -->
+      <div class="selected-file-info" *ngIf="openIncidentsUpload.file && !openIncidentsUpload.processing && !openIncidentsUpload.result">
+        <div class="file-icon">📄</div>
+        <div class="file-details">
+          <p class="file-name">{{ openIncidentsUpload.file.name }}</p>
+          <p class="file-size">{{ formatFileSize(openIncidentsUpload.file.size) }}</p>
+        </div>
+        <button class="btn-clear" (click)="clearOpenSelection()">✕</button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="actions" *ngIf="openIncidentsUpload.file && !openIncidentsUpload.result">
+        <button 
+          class="btn btn-primary"
+          [disabled]="openIncidentsUpload.processing"
+          (click)="processOpenFile()">
+          <span *ngIf="!openIncidentsUpload.processing">Procesar Archivo</span>
+          <span *ngIf="openIncidentsUpload.processing">
+            <span class="spinner"></span>
+            Procesando...
+          </span>
+        </button>
+      </div>
+
+      <!-- Processing Result -->
+      <div class="result-container" *ngIf="openIncidentsUpload.result">
+        <div class="alert alert-success" *ngIf="openIncidentsUpload.result.success">
+          <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <div>
+            <p class="alert-title">¡Archivo procesado exitosamente!</p>
+            <p class="alert-message">Se importaron {{ openIncidentsUpload.result.processedRows }} incidentes abiertos</p>
+          </div>
+        </div>
+
+        <div class="alert alert-error" *ngIf="!openIncidentsUpload.result.success">
+          <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <div>
+            <p class="alert-title">Error al procesar el archivo</p>
+          </div>
+        </div>
+
+        <div class="result-stats" *ngIf="openIncidentsUpload.result.success">
+          <div class="stat-item">
+            <span class="stat-label">Procesadas:</span>
+            <span class="stat-value">{{ openIncidentsUpload.result.processedRows }}</span>
+          </div>
+          <div class="stat-item" *ngIf="openIncidentsUpload.result.skippedRows > 0">
+            <span class="stat-label">Omitidas:</span>
+            <span class="stat-value warning">{{ openIncidentsUpload.result.skippedRows }}</span>
+          </div>
+        </div>
+
+        <div class="warnings" *ngIf="openIncidentsUpload.result.warnings.length > 0">
+          <p class="warnings-title">⚠️ Advertencias:</p>
+          <ul class="warnings-list">
+            <li *ngFor="let warning of openIncidentsUpload.result.warnings">{{ warning }}</li>
+          </ul>
+        </div>
+
+        <div class="errors" *ngIf="openIncidentsUpload.result.errors.length > 0">
+          <p class="errors-title">❌ Errores:</p>
+          <ul class="errors-list">
+            <li *ngFor="let error of openIncidentsUpload.result.errors">{{ error }}</li>
+          </ul>
+        </div>
+
+        <button class="btn btn-secondary" (click)="clearOpenSelection()">
+          Cargar Otro Archivo
+        </button>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 2: INCIDENTES RESUELTOS -->
+    <div class="upload-card">
+      <h2 class="card-title">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        {{ resolvedIncidentsUpload.title }}
+      </h2>
+      <p class="card-description">{{ resolvedIncidentsUpload.description }}</p>
+
+      <!-- Drop Zone -->
+      <div 
+        class="drop-zone"
+        [class.drag-over]="resolvedIncidentsUpload.dragOver"
+        (dragover)="onResolvedDragOver($event)"
+        (dragleave)="onResolvedDragLeave($event)"
+        (drop)="onResolvedDrop($event)"
+        *ngIf="!resolvedIncidentsUpload.file">
+        
+        <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="12" y1="18" x2="12" y2="12"></line>
+          <line x1="9" y1="15" x2="15" y2="15"></line>
+        </svg>
+
+        <p class="drop-text">Arrastra y suelta tu archivo aquí</p>
+        <p class="drop-subtext">o</p>
+        
+        <label class="file-input-label">
+          <input 
+            type="file" 
+            accept=".csv,.xlsx,.xls"
+            (change)="onResolvedFileSelected($event)"
+            class="file-input">
+          Seleccionar Archivo
+        </label>
+
+        <p class="supported-formats">CSV, Excel (.xlsx, .xls)</p>
+      </div>
+
+      <!-- Selected File Info -->
+      <div class="selected-file-info" *ngIf="resolvedIncidentsUpload.file && !resolvedIncidentsUpload.processing && !resolvedIncidentsUpload.result">
+        <div class="file-icon">📄</div>
+        <div class="file-details">
+          <p class="file-name">{{ resolvedIncidentsUpload.file.name }}</p>
+          <p class="file-size">{{ formatFileSize(resolvedIncidentsUpload.file.size) }}</p>
+        </div>
+        <button class="btn-clear" (click)="clearResolvedSelection()">✕</button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="actions" *ngIf="resolvedIncidentsUpload.file && !resolvedIncidentsUpload.result">
+        <button 
+          class="btn btn-primary"
+          [disabled]="resolvedIncidentsUpload.processing"
+          (click)="processResolvedFile()">
+          <span *ngIf="!resolvedIncidentsUpload.processing">Procesar Archivo</span>
+          <span *ngIf="resolvedIncidentsUpload.processing">
+            <span class="spinner"></span>
+            Procesando...
+          </span>
+        </button>
+      </div>
+
+      <!-- Processing Result -->
+      <div class="result-container" *ngIf="resolvedIncidentsUpload.result">
+        <div class="alert alert-success" *ngIf="resolvedIncidentsUpload.result.success">
+          <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <div>
+            <p class="alert-title">¡Archivo procesado exitosamente!</p>
+            <p class="alert-message">Se importaron {{ resolvedIncidentsUpload.result.processedRows }} incidentes resueltos</p>
+          </div>
+        </div>
+
+        <div class="alert alert-error" *ngIf="!resolvedIncidentsUpload.result.success">
+          <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          <div>
+            <p class="alert-title">Error al procesar el archivo</p>
+          </div>
+        </div>
+
+        <div class="result-stats" *ngIf="resolvedIncidentsUpload.result.success">
+          <div class="stat-item">
+            <span class="stat-label">Procesadas:</span>
+            <span class="stat-value">{{ resolvedIncidentsUpload.result.processedRows }}</span>
+          </div>
+          <div class="stat-item" *ngIf="resolvedIncidentsUpload.result.skippedRows > 0">
+            <span class="stat-label">Omitidas:</span>
+            <span class="stat-value warning">{{ resolvedIncidentsUpload.result.skippedRows }}</span>
+          </div>
+        </div>
+
+        <div class="warnings" *ngIf="resolvedIncidentsUpload.result.warnings.length > 0">
+          <p class="warnings-title">⚠️ Advertencias:</p>
+          <ul class="warnings-list">
+            <li *ngFor="let warning of resolvedIncidentsUpload.result.warnings">{{ warning }}</li>
+          </ul>
+        </div>
+
+        <div class="errors" *ngIf="resolvedIncidentsUpload.result.errors.length > 0">
+          <p class="errors-title">❌ Errores:</p>
+          <ul class="errors-list">
+            <li *ngFor="let error of resolvedIncidentsUpload.result.errors">{{ error }}</li>
+          </ul>
+        </div>
+
+        <button class="btn btn-secondary" (click)="clearResolvedSelection()">
+          Cargar Otro Archivo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

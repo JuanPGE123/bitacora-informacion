@@ -1,0 +1,73 @@
+<div class="analytics-container">
+  <div class="analytics-header">
+    <div>
+      <h1>Análisis y Gráficos</h1>
+      <p class="subtitle">Visualización de datos y tendencias</p>
+    </div>
+    <div class="export-actions">
+      <button class="btn btn-export" (click)="exportData('xlsx')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Exportar Excel
+      </button>
+      <button class="btn btn-export-csv" (click)="exportData('csv')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Exportar CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Charts Grid -->
+  <div class="charts-grid">
+    <!-- Incidentes por Analista -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>Incidentes por Analista</h3>
+        <p class="chart-description">Top 10 analistas con más incidentes asignados</p>
+      </div>
+      <div class="chart-container">
+        <canvas #analystChart></canvas>
+      </div>
+    </div>
+
+    <!-- Distribución por Prioridad -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>Distribución por Prioridad</h3>
+        <p class="chart-description">Clasificación de incidentes según prioridad</p>
+      </div>
+      <div class="chart-container">
+        <canvas #priorityChart></canvas>
+      </div>
+    </div>
+
+    <!-- Tendencia Diaria -->
+    <div class="chart-card chart-wide">
+      <div class="chart-header">
+        <h3>Tendencia de Incidentes</h3>
+        <p class="chart-description">Evolución de incidentes abiertos y resueltos (últimos 30 días)</p>
+      </div>
+      <div class="chart-container">
+        <canvas #trendChart></canvas>
+      </div>
+    </div>
+
+    <!-- Abiertos vs Resueltos -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>Abiertos vs Resueltos</h3>
+        <p class="chart-description">Comparativa del estado actual de incidentes</p>
+      </div>
+      <div class="chart-container">
+        <canvas #comparisonChart></canvas>
+      </div>
+    </div>
+  </div>
+</div>

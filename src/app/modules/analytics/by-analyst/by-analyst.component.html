@@ -1,0 +1,53 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Incidentes por Analista Asignado</h1>
+    <p class="subtitle">Vista agrupada por analista con opción de copiar para envío</p>
+  </div>
+
+  <!-- Mensaje de copiado -->
+  <div class="copy-message" *ngIf="copiedMessage">
+    ✅ {{ copiedMessage }}
+  </div>
+
+  <div class="analyst-groups">
+    <div class="analyst-group-card" *ngFor="let group of analystGroups">
+      <div class="group-header" (click)="toggleAnalystGroup(group)">
+        <div class="group-info">
+          <h3>{{ group.analyst }}</h3>
+          <span class="badge">{{ group.count }} incidente{{ group.count !== 1 ? 's' : '' }}</span>
+        </div>
+        <div class="group-actions">
+          <button class="btn-copy" (click)="copyAnalystIncidents(group); $event.stopPropagation()">
+            📋 Copiar
+          </button>
+          <span class="expand-icon">{{ group.expanded ? '▼' : '▶' }}</span>
+        </div>
+      </div>
+
+      <div class="incidents-list" *ngIf="group.expanded">
+        <table class="incidents-table">
+          <thead>
+            <tr>
+              <th>No. Incidente</th>
+              <th>External Ticket</th>
+              <th>Fecha Apertura</th>
+              <th>Prioridad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let incident of group.incidents">
+              <td>{{ incident.incidentNumber }}</td>
+              <td>{{ incident.externalTicket || 'Sin External Ticket' }}</td>
+              <td>{{ formatDate(incident.openDate) }}</td>
+              <td>
+                <span class="priority-badge" [class]="'priority-' + incident.priority.toLowerCase()">
+                  {{ incident.priority }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
