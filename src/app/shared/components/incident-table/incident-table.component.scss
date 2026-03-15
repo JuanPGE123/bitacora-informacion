@@ -19,6 +19,9 @@
 }
 
 .header-stats {
+  display: flex;
+  gap: 1.5rem;
+  
   .stat {
     color: #6b7280;
     font-size: 0.875rem;
@@ -26,6 +29,26 @@
     strong {
       color: #1f2937;
       font-size: 1.125rem;
+    }
+  }
+
+  .stat-clickable {
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+    border-radius: 6px;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #fde68a;
+      border-color: #f59e0b;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    strong {
+      color: #92400e;
     }
   }
 }

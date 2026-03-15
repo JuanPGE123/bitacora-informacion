@@ -20,45 +20,65 @@
   </div>
 
   <div class="analyst-groups">
-    <div class="analyst-group-card" *ngFor="let group of analystDateGroups">
-      <div class="group-header" (click)="toggleGroup(group)">
-        <div class="group-info">
-          <h3>{{ group.analyst }} - {{ group.date }}</h3>
-          <span class="badge">{{ group.count }} resuelto{{ group.count !== 1 ? 's' : '' }}</span>
+    <div class="date-group-card" *ngFor="let dateGroup of dateGroups">
+      <!-- Header de fecha -->
+      <div class="date-header" (click)="toggleDateGroup(dateGroup)">
+        <div class="date-info">
+          <h3>{{ dateGroup.date }}</h3>
+          <span class="badge">{{ dateGroup.totalCount }} resuelto{{ dateGroup.totalCount !== 1 ? 's' : '' }}</span>
         </div>
         <div class="group-actions">
-          <button class="btn-copy" (click)="copyGroupIncidents(group); $event.stopPropagation()">
-            📋 Copiar
+          <button class="btn-copy" (click)="copyDateGroupIncidents(dateGroup); $event.stopPropagation()">
+            📋 Copiar Todo
           </button>
-          <span class="expand-icon">{{ group.expanded ? '▼' : '▶' }}</span>
+          <span class="expand-icon">{{ dateGroup.expanded ? '▼' : '▶' }}</span>
         </div>
       </div>
 
-      <div class="incidents-list" *ngIf="group.expanded">
-        <table class="incidents-table">
-          <thead>
-            <tr>
-              <th>No. Incidente</th>
-              <th>External Ticket</th>
-              <th>Fecha Apertura</th>
-              <th>Fecha Solución</th>
-              <th>Prioridad</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let incident of group.incidents">
-              <td>{{ incident.incidentNumber }}</td>
-              <td>{{ incident.externalTicket || 'Sin External Ticket' }}</td>
-              <td>{{ formatDate(incident.openDate) }}</td>
-              <td>{{ incident.solutionDate ? formatDate(incident.solutionDate) : '-' }}</td>
-              <td>
-                <span class="priority-badge" [class]="'priority-' + incident.priority.toLowerCase()">
-                  {{ incident.priority }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Lista de analistas dentro de la fecha -->
+      <div class="analysts-list" *ngIf="dateGroup.expanded">
+        <div class="analyst-item" *ngFor="let analyst of dateGroup.analysts">
+          <div class="analyst-header" (click)="toggleAnalyst(analyst)">
+            <div class="analyst-info">
+              <h4>{{ analyst.analyst }}</h4>
+              <span class="analyst-badge">{{ analyst.count }} incidente{{ analyst.count !== 1 ? 's' : '' }}</span>
+            </div>
+            <div class="analyst-actions">
+              <button class="btn-copy-small" (click)="copyAnalystIncidents(analyst, dateGroup.date); $event.stopPropagation()">
+                📋
+              </button>
+              <span class="expand-icon-small">{{ analyst.expanded ? '▼' : '▶' }}</span>
+            </div>
+          </div>
+
+          <!-- Tabla de incidentes del analista -->
+          <div class="incidents-list" *ngIf="analyst.expanded">
+            <table class="incidents-table">
+              <thead>
+                <tr>
+                  <th>No. Incidente</th>
+                  <th>External Ticket</th>
+                  <th>Fecha Apertura</th>
+                  <th>Fecha Solución</th>
+                  <th>Prioridad</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let incident of analyst.incidents">
+                  <td>{{ incident.incidentNumber }}</td>
+                  <td>{{ incident.externalTicket || 'Sin External Ticket' }}</td>
+                  <td>{{ formatDate(incident.openDate) }}</td>
+                  <td>{{ incident.solutionDate ? formatDate(incident.solutionDate) : '-' }}</td>
+                  <td>
+                    <span class="priority-badge" [class]="'priority-' + incident.priority.toLowerCase()">
+                      {{ incident.priority }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>

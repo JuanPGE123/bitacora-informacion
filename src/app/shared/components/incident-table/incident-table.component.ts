@@ -29,6 +29,9 @@ export class IncidentTableComponent implements OnInit, OnChanges {
   analysts: string[] = [];
   priorities: string[] = Object.values(IncidentPriority);
   externalTickets: string[] = [];
+  
+  // Contador de incidentes sin external ticket
+  incidentsWithoutExternalTicket: number = 0;
 
   sortOptions: SortOptions = { field: 'createdDate', direction: 'desc' };
   
@@ -55,6 +58,9 @@ export class IncidentTableComponent implements OnInit, OnChanges {
     
     const uniqueTickets = new Set(this.incidents.map(i => i.externalTicket).filter(t => t));
     this.externalTickets = Array.from(uniqueTickets).sort() as string[];
+    
+    // Contar incidentes sin external ticket
+    this.incidentsWithoutExternalTicket = this.incidents.filter(i => !i.externalTicket || i.externalTicket.trim() === '').length;
   }
 
   applyFilters(): void {
@@ -150,6 +156,15 @@ export class IncidentTableComponent implements OnInit, OnChanges {
     this.selectedPriority = '';
     this.selectedExternalTicket = '';
     this.applyFilters();
+  }
+
+  filterByNoExternalTicket(): void {
+    this.clearFilters();
+    this.filteredIncidents = this.incidents.filter(i => !i.externalTicket || i.externalTicket.trim() === '');
+    this.pagination.totalItems = this.filteredIncidents.length;
+    this.pagination.page = 0;
+    this.sortIncidents();
+    this.updateDisplayedIncidents();
   }
 
   get totalPages(): number {

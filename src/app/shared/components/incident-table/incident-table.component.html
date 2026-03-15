@@ -3,6 +3,12 @@
     <h2>{{ title }}</h2>
     <div class="header-stats">
       <span class="stat">Total: <strong>{{ pagination.totalItems }}</strong></span>
+      <span class="stat stat-clickable" 
+            *ngIf="incidentsWithoutExternalTicket > 0" 
+            (click)="filterByNoExternalTicket()"
+            title="Click para filtrar incidentes sin External Ticket">
+        Sin External Ticket: <strong>{{ incidentsWithoutExternalTicket }}</strong> 🔍
+      </span>
     </div>
   </div>
 

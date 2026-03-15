@@ -6,11 +6,17 @@ import { Chart, ChartConfiguration, registerables } from 'chart.js';
 
 Chart.register(...registerables);
 
-interface AnalystDateGroup {
+interface AnalystInfo {
   analyst: string;
-  date: string;
   count: number;
   incidents: Incident[];
+  expanded: boolean;
+}
+
+interface DateGroup {
+  date: string;
+  totalCount: number;
+  analysts: AnalystInfo[];
   expanded: boolean;
 }
 
@@ -25,7 +31,7 @@ export class ResolvedByAnalystComponent implements OnInit, AfterViewInit {
   @ViewChild('analystChart') analystChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('dateChart') dateChartRef!: ElementRef<HTMLCanvasElement>;
   
-  analystDateGroups: AnalystDateGroup[] = [];
+  dateGroups: DateGroup[] = [];
   copiedMessage: string = '';
   private analystChart: Chart | null = null;
   private dateChart: Chart | null = null;
@@ -42,41 +48,51 @@ export class ResolvedByAnalystComponent implements OnInit, AfterViewInit {
 
   loadAnalystDateGroups(): void {
     this.incidentService.getResolvedIncidentsObservable().subscribe(incidents => {
-      const groups = new Map<string, Incident[]>();
+      // Primer agrupamiento: por fecha
+      const dateMap = new Map<string, Map<string, Incident[]>>();
       
       incidents.forEach(incident => {
         if (incident.solutionDate) {
-          const analyst = incident.assignedAnalyst || 'Sin Asignar';
           const date = this.formatDate(incident.solutionDate);
-          const key = `${analyst}|${date}`;
+          const analyst = incident.assignedAnalyst || 'Sin Asignar';
           
-          if (!groups.has(key)) {
-            groups.set(key, []);
+          if (!dateMap.has(date)) {
+            dateMap.set(date, new Map<string, Incident[]>());
           }
-          groups.get(key)!.push(incident);
+          
+          const analystMap = dateMap.get(date)!;
+          if (!analystMap.has(analyst)) {
+            analystMap.set(analyst, []);
+          }
+          
+          analystMap.get(analyst)!.push(incident);
         }
       });
 
-      this.analystDateGroups = Array.from(groups.entries())
-        .map(([key, incidents]) => {
-          const [analyst, date] = key.split('|');
+      // Convertir a estructura DateGroup
+      this.dateGroups = Array.from(dateMap.entries())
+        .map(([date, analystMap]) => {
+          const analysts: AnalystInfo[] = Array.from(analystMap.entries())
+            .map(([analyst, incidents]) => ({
+              analyst,
+              count: incidents.length,
+              incidents: incidents.sort((a, b) => 
+                (a.incidentNumber || '').localeCompare(b.incidentNumber || '')
+              ),
+              expanded: false
+            }))
+            .sort((a, b) => b.count - a.count); // Ordenar analistas por cantidad (mayor primero)
+          
+          const totalCount = analysts.reduce((sum, a) => sum + a.count, 0);
+          
           return {
-            analyst,
             date,
-            count: incidents.length,
-            incidents: incidents.sort((a, b) => 
-              (a.incidentNumber || '').localeCompare(b.incidentNumber || '')
-            ),
+            totalCount,
+            analysts,
             expanded: false
           };
         })
-        .sort((a, b) => {
-          // Ordenar por fecha (más reciente primero) y luego por analista
-          if (a.date !== b.date) {
-            return b.date.localeCompare(a.date);
-          }
-          return a.analyst.localeCompare(b.analyst);
-        });
+        .sort((a, b) => b.date.localeCompare(a.date)); // Ordenar fechas (más reciente primero)
       
       // Crear gráficas después de cargar los datos
       setTimeout(() => this.createCharts(), 100);
@@ -93,9 +109,11 @@ export class ResolvedByAnalystComponent implements OnInit, AfterViewInit {
 
     // Agrupar por analista
     const analystCounts = new Map<string, number>();
-    this.analystDateGroups.forEach(group => {
-      const current = analystCounts.get(group.analyst) || 0;
-      analystCounts.set(group.analyst, current + group.count);
+    this.dateGroups.forEach(dateGroup => {
+      dateGroup.analysts.forEach(analystInfo => {
+        const current = analystCounts.get(analystInfo.analyst) || 0;
+        analystCounts.set(analystInfo.analyst, current + analystInfo.count);
+      });
     });
 
     const sortedAnalysts = Array.from(analystCounts.entries())
@@ -148,9 +166,8 @@ export class ResolvedByAnalystComponent implements OnInit, AfterViewInit {
 
     // Agrupar por fecha
     const dateCounts = new Map<string, number>();
-    this.analystDateGroups.forEach(group => {
-      const current = dateCounts.get(group.date) || 0;
-      dateCounts.set(group.date, current + group.count);
+    this.dateGroups.forEach(group => {
+      dateCounts.set(group.date, group.totalCount);
     });
 
     const sortedDates = Array.from(dateCounts.entries())
@@ -206,13 +223,23 @@ export class ResolvedByAnalystComponent implements OnInit, AfterViewInit {
     this.dateChart = new Chart(this.dateChartRef.nativeElement, config);
   }
 
-  toggleGroup(group: AnalystDateGroup): void {
+  toggleDateGroup(group: DateGroup): void {
     group.expanded = !group.expanded;
   }
 
-  copyGroupIncidents(group: AnalystDateGroup): void {
-    const text = this.formatIncidentsForCopy(group.incidents);
-    this.copyToClipboard(text, `Incidentes de ${group.analyst} - ${group.date} copiados`);
+  toggleAnalyst(analyst: AnalystInfo): void {
+    analyst.expanded = !analyst.expanded;
+  }
+
+  copyDateGroupIncidents(group: DateGroup): void {
+    const allIncidents = group.analysts.flatMap(a => a.incidents);
+    const text = this.formatIncidentsForCopy(allIncidents);
+    this.copyToClipboard(text, `Incidentes del ${group.date} copiados (${group.totalCount} total)`);
+  }
+
+  copyAnalystIncidents(analyst: AnalystInfo, date: string): void {
+    const text = this.formatIncidentsForCopy(analyst.incidents);
+    this.copyToClipboard(text, `Incidentes de ${analyst.analyst} - ${date} copiados`);
   }
 
   private formatIncidentsForCopy(incidents: Incident[]): string {
