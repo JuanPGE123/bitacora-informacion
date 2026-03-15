@@ -1,4 +1,4 @@
-# Incident Analytics Dashboard - Documentación Técnica
+# Analizador de Backlog - Documentación Técnica
 
 ## 🏗️ Arquitectura del Sistema
 

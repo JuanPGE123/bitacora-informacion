@@ -88,3 +88,136 @@ button {
 .p-2 { padding: 1rem; }
 .p-3 { padding: 1.5rem; }
 .p-4 { padding: 2rem; }
+
+/* Modo Oscuro */
+body.dark-theme {
+  background: #111827;
+  color: #f3f4f6;
+
+  .app-layout {
+    background: #111827;
+  }
+
+  .topbar {
+    background: #1f2937;
+    border-bottom: 1px solid #374151;
+
+    .page-title {
+      color: #f3f4f6;
+    }
+
+    .theme-toggle {
+      color: #f3f4f6;
+      border-color: #374151;
+
+      &:hover {
+        background: #374151;
+        border-color: #4b5563;
+      }
+    }
+  }
+
+  .content {
+    background: #111827;
+  }
+
+  .section-card {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .section-title {
+    color: #f3f4f6;
+  }
+
+  .subtitle {
+    color: #9ca3af !important;
+  }
+
+  .analytics-header h1 {
+    color: #f3f4f6 !important;
+  }
+
+  .stat-box {
+    &.stat-with {
+      background: linear-gradient(135deg, #047857 0%, #065f46 100%);
+    }
+
+    &.stat-without {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    }
+  }
+
+  .ticket-group-card,
+  .ticket-header,
+  .dynatrace-header,
+  .high-sla-header {
+    background: #1f2937;
+    border-color: #374151;
+
+    &:hover {
+      background: #374151;
+    }
+
+    h3 {
+      color: #f3f4f6;
+    }
+  }
+
+  .incidents-table {
+    thead {
+      background: #374151;
+
+      th {
+        color: #d1d5db;
+      }
+    }
+
+    tbody {
+      tr {
+        border-bottom-color: #374151;
+
+        &:hover {
+          background: #374151;
+        }
+
+        td {
+          color: #f3f4f6;
+        }
+      }
+    }
+  }
+
+  .empty-state {
+    color: #9ca3af;
+  }
+
+  .btn-copy {
+    background: #047857;
+
+    &:hover:not(:disabled) {
+      background: #065f46;
+    }
+  }
+
+  .btn-export-excel {
+    background: #047857;
+
+    &:hover:not(:disabled) {
+      background: #065f46;
+    }
+  }
+
+  /* Scrollbar en modo oscuro */
+  ::-webkit-scrollbar-track {
+    background: #1f2937;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #4b5563;
+
+    &:hover {
+      background: #6b7280;
+    }
+  }
+}

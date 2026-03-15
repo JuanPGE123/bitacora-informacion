@@ -1,4 +1,4 @@
-# 📊 Guía de Uso - Incident Analytics Dashboard
+# 📊 Guía de Uso - Analizador de Backlog
 
 ## 🚀 Inicio Rápido
 
@@ -217,4 +217,4 @@ Para problemas o sugerencias, revisa los logs de la consola del navegador (F12).
 
 ---
 
-¡Disfruta usando Incident Analytics Dashboard! 🚀
+¡Disfruta usando Analizador de Backlog! 🚀

@@ -1,4 +1,4 @@
-# 🚀 INSTRUCCIONES DE INICIO - Incident Analytics Dashboard
+# 🚀 INSTRUCCIONES DE INICIO - Analizador de Backlog
 
 ## ✅ Requisitos Previos
 

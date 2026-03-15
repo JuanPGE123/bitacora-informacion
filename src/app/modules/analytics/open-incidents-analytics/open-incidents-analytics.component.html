@@ -32,7 +32,12 @@
 
   <!-- Sección 2: Agrupación por External Ticket -->
   <div class="section-card">
-    <h2 class="section-title">🎫 Incidentes por External Ticket</h2>
+    <div class="section-header">
+      <h2 class="section-title">🎫 Incidentes por External Ticket</h2>
+      <button class="btn-export-excel" (click)="exportTicketGroupsToExcel()" [disabled]="externalTicketGroups.length === 0">
+        📥 Excel
+      </button>
+    </div>
     <div class="ticket-groups">
       <div class="ticket-group-card" *ngFor="let group of externalTicketGroups">
         <div class="ticket-header" (click)="toggleTicketGroup(group)">
@@ -82,7 +87,12 @@
 
   <!-- Sección 3: Incidentes Dynatrace -->
   <div class="section-card">
-    <h2 class="section-title">🔧 Incidentes Dynatrace</h2>
+    <div class="section-header">
+      <h2 class="section-title">🔧 Incidentes Dynatrace</h2>
+      <button class="btn-export-excel" (click)="exportDynatraceToExcel()" [disabled]="dynatraceCount === 0">
+        📥 Excel
+      </button>
+    </div>
     <div class="dynatrace-section">
       <div class="dynatrace-header" (click)="toggleDynatrace()">
         <div class="dynatrace-info">
@@ -132,7 +142,12 @@
 
   <!-- Sección 4: Incidentes con Tiempo ANS >= 66.5 -->
   <div class="section-card">
-    <h2 class="section-title">⚠️ Incidentes con Tiempo ANS ≥ 66.5 horas</h2>
+    <div class="section-header">
+      <h2 class="section-title">⚠️ Incidentes con Tiempo ANS ≥ 66.5 horas</h2>
+      <button class="btn-export-excel" (click)="exportHighSLAToExcel()" [disabled]="highSLACount === 0">
+        📥 Excel
+      </button>
+    </div>
     <div class="high-sla-section">
       <div class="high-sla-header" (click)="toggleHighSLA()">
         <div class="high-sla-info">

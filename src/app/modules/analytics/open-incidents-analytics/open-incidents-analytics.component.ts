@@ -1,6 +1,7 @@
 ﻿import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IncidentService } from '../../../core/services/incident.service';
+import { ExportService } from '../../../core/services/export.service';
 import { Incident } from '../../../core/models/incident.model';
 
 interface ExternalTicketGroup {
@@ -37,7 +38,10 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
   
   copiedMessage: string = '';
 
-  constructor(private incidentService: IncidentService) {}
+  constructor(
+    private incidentService: IncidentService,
+    private exportService: ExportService
+  ) {}
 
   ngOnInit(): void {
     this.loadAnalytics();
@@ -122,6 +126,35 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
   copyTicketGroupIncidents(group: ExternalTicketGroup): void {
     const text = this.formatIncidentsForCopy(group.incidents);
     this.copyToClipboard(text, `Incidentes de ${group.ticketName} copiados`);
+  }
+
+  // Métodos de exportación Excel
+  exportTicketGroupsToExcel(): void {
+    const allIncidents: Incident[] = [];
+    this.externalTicketGroups.forEach(group => {
+      allIncidents.push(...group.incidents);
+    });
+    this.exportService.exportToExcel(allIncidents, 'incidentes_por_external_ticket');
+  }
+
+  exportDynatraceToExcel(): void {
+    this.exportService.exportToExcel(this.dynatraceIncidents, 'incidentes_dynatrace');
+  }
+
+  exportHighSLAToExcel(): void {
+    this.exportService.exportToExcel(this.highSLAIncidents, 'incidentes_ans_alto');
+  }
+
+  exportAllSectionsToExcel(): void {
+    const allIncidents = [
+      ...this.externalTicketGroups.flatMap(g => g.incidents),
+      ...this.dynatraceIncidents,
+      ...this.highSLAIncidents
+    ];
+    // Eliminar duplicados
+    const unique = Array.from(new Set(allIncidents.map(i => i.incidentNumber)))
+      .map(number => allIncidents.find(i => i.incidentNumber === number)!);
+    this.exportService.exportToExcel(unique, 'analisis_abiertos_completo');
   }
 
   private formatIncidentsForCopy(incidents: Incident[]): string {

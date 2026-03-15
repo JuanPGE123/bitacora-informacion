@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, RouterOutlet } from '@angular/router';
+import { ThemeService } from './core/services/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -10,8 +11,14 @@ import { RouterModule, RouterOutlet } from '@angular/router';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'Incident Analytics Dashboard';
+  title = 'Analizador de Backlog';
   menuOpen = false;
+
+  constructor(public themeService: ThemeService) {}
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
 
   menuItems = [
     {
