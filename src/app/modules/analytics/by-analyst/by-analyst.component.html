@@ -30,6 +30,9 @@
           <button class="btn-copy" (click)="copyAnalystIncidents(group); $event.stopPropagation()">
             📋 Copiar
           </button>
+          <button class="btn-export-excel" (click)="exportAnalystToExcel(group); $event.stopPropagation()">
+            📅 Excel
+          </button>
           <span class="expand-icon">{{ group.expanded ? '▼' : '▶' }}</span>
         </div>
       </div>

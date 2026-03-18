@@ -20,6 +20,9 @@
           <button class="btn-copy" (click)="copyBranchIncidents(branch); $event.stopPropagation()">
             📋 Copiar
           </button>
+          <button class="btn-export-excel" (click)="exportBranchToExcel(branch); $event.stopPropagation()">
+            📅 Excel
+          </button>
           <span class="expand-icon">{{ branch.expanded ? '▼' : '▶' }}</span>
         </div>
       </div>

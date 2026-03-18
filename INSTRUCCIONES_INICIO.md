@@ -4,7 +4,7 @@
 
 Antes de comenzar, asegúrate de tener instalado:
 
-- **Node.js** (versión 18 o superior)
+- **Node.js** (versión 24 o superior)
   - Descarga: https://nodejs.org/
   - Verifica: `node --version`
 
@@ -116,7 +116,7 @@ ng serve --port 4300
 
 **Solución**: Verifica la versión de Node.js:
 ```bash
-node --version  # Debe ser v18 o superior
+node --version  # Debe ser v24 o superior
 ```
 
 ### Gráficos no se muestran

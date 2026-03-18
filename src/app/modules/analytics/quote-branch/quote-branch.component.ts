@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IncidentService } from '../../../core/services/incident.service';
+import { ExportService } from '../../../core/services/export.service';
 import { Incident } from '../../../core/models/incident.model';
 
 interface QuoteBranch {
@@ -21,7 +22,10 @@ export class QuoteBranchComponent implements OnInit {
   quoteBranches: QuoteBranch[] = [];
   copiedMessage: string = '';
 
-  constructor(private incidentService: IncidentService) {}
+  constructor(
+    private incidentService: IncidentService,
+    private exportService: ExportService
+  ) {}
 
   ngOnInit(): void {
     this.loadQuoteBranchData();
@@ -89,20 +93,12 @@ export class QuoteBranchComponent implements OnInit {
   }
 
   copyBranchIncidents(branch: QuoteBranch): void {
-    const text = this.formatIncidentsForCopy(branch.incidents);
-    this.copyToClipboard(text, `Incidentes de ${branch.branch} copiados`);
+    const incidentNumbers = branch.incidents.map(i => i.incidentNumber).join(', ');
+    this.copyToClipboard(incidentNumbers, `${branch.count} números de incidente copiados`);
   }
 
-  private formatIncidentsForCopy(incidents: Incident[]): string {
-    let text = '| No. Incidente | External Ticket | Fecha Apertura | Analista |\n';
-    text += '|---------------|-----------------|----------------|----------|\n';
-    incidents.forEach(incident => {
-      const ticket = incident.externalTicket || 'Sin External Ticket';
-      const date = this.formatDate(incident.openDate);
-      const analyst = incident.assignedAnalyst || 'Sin Asignar';
-      text += `| ${incident.incidentNumber} | ${ticket} | ${date} | ${analyst} |\n`;
-    });
-    return text;
+  exportBranchToExcel(branch: QuoteBranch): void {
+    this.exportService.exportToExcel(branch.incidents, `incidentes_${branch.branch.replace(/\s+/g, '_')}`);
   }
 
   formatDate(date: Date): string {

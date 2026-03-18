@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { IncidentService } from '../../../core/services/incident.service';
 import { NotionService, AnalystNotionData } from '../../../core/services/notion.service';
+import { ExportService } from '../../../core/services/export.service';
 import { Incident, IncidentPriority } from '../../../core/models/incident.model';
 
 interface AnalystGroup {
@@ -26,7 +27,8 @@ export class ByAnalystComponent implements OnInit {
 
   constructor(
     private incidentService: IncidentService,
-    private notionService: NotionService
+    private notionService: NotionService,
+    private exportService: ExportService
   ) {}
 
   ngOnInit(): void {
@@ -63,8 +65,12 @@ export class ByAnalystComponent implements OnInit {
   }
 
   copyAnalystIncidents(group: AnalystGroup): void {
-    const text = this.formatIncidentsForCopy(group.incidents);
-    this.copyToClipboard(text, `Incidentes de ${group.analyst} copiados`);
+    const incidentNumbers = group.incidents.map(i => i.incidentNumber).join(', ');
+    this.copyToClipboard(incidentNumbers, `${group.count} números de incidente copiados`);
+  }
+
+  exportAnalystToExcel(group: AnalystGroup): void {
+    this.exportService.exportToExcel(group.incidents, `incidentes_${group.analyst.replace(/\s+/g, '_')}`);
   }
 
   migrateToNotion(): void {
@@ -114,17 +120,7 @@ export class ByAnalystComponent implements OnInit {
     };
   }
 
-  private formatIncidentsForCopy(incidents: Incident[]): string {
-    let text = '| No. Incidente | External Ticket | Fecha Apertura | Analista |\n';
-    text += '|---------------|-----------------|----------------|----------|\n';
-    incidents.forEach(incident => {
-      const ticket = incident.externalTicket || 'Sin External Ticket';
-      const date = this.formatDate(incident.openDate);
-      const analyst = incident.assignedAnalyst || 'Sin Asignar';
-      text += `| ${incident.incidentNumber} | ${ticket} | ${date} | ${analyst} |\n`;
-    });
-    return text;
-  }
+
 
   formatDate(date: Date): string {
     if (!date) return '-';

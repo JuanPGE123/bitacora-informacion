@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IncidentService } from '../../../core/services/incident.service';
+import { ExportService } from '../../../core/services/export.service';
 import { Incident } from '../../../core/models/incident.model';
 
 @Component({
@@ -19,7 +20,10 @@ export class MainQueuesComponent implements OnInit {
   mainQueuesIncidents: Incident[] = [];
   copiedMessage: string = '';
 
-  constructor(private incidentService: IncidentService) {}
+  constructor(
+    private incidentService: IncidentService,
+    private exportService: ExportService
+  ) {}
 
   ngOnInit(): void {
     this.loadMainQueuesData();
@@ -35,19 +39,12 @@ export class MainQueuesComponent implements OnInit {
   }
 
   copyAllIncidents(): void {
-    const text = this.formatIncidentsForCopy(this.mainQueuesIncidents);
-    this.copyToClipboard(text, 'Incidentes de bandejas principales copiados');
+    const incidentNumbers = this.mainQueuesIncidents.map(i => i.incidentNumber).join(', ');
+    this.copyToClipboard(incidentNumbers, `${this.mainQueuesIncidents.length} números de incidente copiados`);
   }
 
-  private formatIncidentsForCopy(incidents: Incident[]): string {
-    let text = 'No. Incidente\tExternal Ticket\tFecha Apertura\tAnalista\n';
-    incidents.forEach(incident => {
-      const ticket = incident.externalTicket || 'Sin External Ticket';
-      const date = this.formatDate(incident.openDate);
-      const analyst = incident.assignedAnalyst || 'Sin Asignar';
-      text += `${incident.incidentNumber}\t${ticket}\t${date}\t${analyst}\n`;
-    });
-    return text;
+  exportToExcel(): void {
+    this.exportService.exportToExcel(this.mainQueuesIncidents, 'incidentes_bandejas_principales');
   }
 
   formatDate(date: Date): string {

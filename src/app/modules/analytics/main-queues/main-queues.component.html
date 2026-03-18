@@ -2,9 +2,14 @@
   <div class="page-header">
     <h1>Bandejas Principales</h1>
     <p class="subtitle">{{ mainQueuesIncidents.length }} incidente{{ mainQueuesIncidents.length !== 1 ? 's' : '' }} en bandejas principales</p>
-    <button class="btn-copy-large" (click)="copyAllIncidents()">
-      📋 Copiar Todos los Incidentes
-    </button>
+    <div class="header-actions">
+      <button class="btn-copy-large" (click)="copyAllIncidents()">
+        📋 Copiar
+      </button>
+      <button class="btn-export-excel" (click)="exportToExcel()" [disabled]="mainQueuesIncidents.length === 0">
+        📅 Excel
+      </button>
+    </div>
   </div>
 
   <!-- Mensaje de copiado -->

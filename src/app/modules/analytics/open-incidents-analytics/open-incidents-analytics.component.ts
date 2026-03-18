@@ -53,16 +53,14 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
       this.incidentsWithExternalTicket = incidents.filter(i => i.externalTicket && i.externalTicket.trim() !== '').length;
       this.incidentsWithoutExternalTicket = incidents.filter(i => !i.externalTicket || i.externalTicket.trim() === '').length;
       
-      // 2. Agrupar por External Ticket
+      // 2. Agrupar por External Ticket (incluyendo los que no tienen)
       const ticketGroups = new Map<string, Incident[]>();
       incidents.forEach(incident => {
-        const ticket = incident.externalTicket?.trim();
-        if (ticket) {
-          if (!ticketGroups.has(ticket)) {
-            ticketGroups.set(ticket, []);
-          }
-          ticketGroups.get(ticket)!.push(incident);
+        const ticket = incident.externalTicket?.trim() || 'Sin External Ticket';
+        if (!ticketGroups.has(ticket)) {
+          ticketGroups.set(ticket, []);
         }
+        ticketGroups.get(ticket)!.push(incident);
       });
       
       this.externalTicketGroups = Array.from(ticketGroups.entries())
@@ -103,29 +101,18 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
   }
 
   copyDynatraceIncidents(): void {
-    const text = this.formatIncidentsForCopy(this.dynatraceIncidents);
-    this.copyToClipboard(text, 'Incidentes Dynatrace copiados');
+    const incidentNumbers = this.dynatraceIncidents.map(i => i.incidentNumber).join(', ');
+    this.copyToClipboard(incidentNumbers, `${this.dynatraceCount} números de incidente copiados`);
   }
 
   copyHighSLAIncidents(): void {
-    const incidents = this.highSLAIncidents.map(i => ({
-      incident: i.incidentNumber,
-      analyst: i.assignedAnalyst || 'Sin Asignar',
-      slaTime: i.slaTime || 0
-    }));
-    
-    let text = '| No. Incidente | Analista Asignado | Tiempo ANS |\n';
-    text += '|---------------|-------------------|------------|\n';
-    incidents.forEach(item => {
-      text += `| ${item.incident} | ${item.analyst} | ${item.slaTime.toFixed(2)} |\n`;
-    });
-    
-    this.copyToClipboard(text, 'Incidentes con ANS >= 66.5 copiados');
+    const incidentNumbers = this.highSLAIncidents.map(i => i.incidentNumber).join(', ');
+    this.copyToClipboard(incidentNumbers, `${this.highSLACount} números de incidente copiados`);
   }
 
   copyTicketGroupIncidents(group: ExternalTicketGroup): void {
-    const text = this.formatIncidentsForCopy(group.incidents);
-    this.copyToClipboard(text, `Incidentes de ${group.ticketName} copiados`);
+    const incidentNumbers = group.incidents.map(i => i.incidentNumber).join(', ');
+    this.copyToClipboard(incidentNumbers, `${group.count} números de incidente copiados`);
   }
 
   // Métodos de exportación Excel
@@ -157,17 +144,7 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
     this.exportService.exportToExcel(unique, 'analisis_abiertos_completo');
   }
 
-  private formatIncidentsForCopy(incidents: Incident[]): string {
-    let text = '| No. Incidente | External Ticket | Fecha Apertura | Analista | Prioridad |\n';
-    text += '|---------------|-----------------|----------------|----------|----------|\n';
-    incidents.forEach(incident => {
-      const ticket = incident.externalTicket || 'Sin External Ticket';
-      const openDate = this.formatDate(incident.openDate);
-      const analyst = incident.assignedAnalyst || 'Sin Asignar';
-      text += `| ${incident.incidentNumber} | ${ticket} | ${openDate} | ${analyst} | ${incident.priority} |\n`;
-    });
-    return text;
-  }
+
 
   formatDate(date: Date): string {
     if (!date) return '-';

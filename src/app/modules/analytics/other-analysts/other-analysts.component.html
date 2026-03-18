@@ -2,9 +2,14 @@
   <div class="page-header">
     <h1>Otros Analistas</h1>
     <p class="subtitle">{{ otherAnalystsIncidents.length }} incidente{{ otherAnalystsIncidents.length !== 1 ? 's' : '' }} (excluyendo bandejas principales)</p>
-    <button class="btn-copy-large" (click)="copyAllIncidents()">
-      📋 Copiar Todos los Incidentes
-    </button>
+    <div class="header-actions">
+      <button class="btn-copy-large" (click)="copyAllIncidents()">
+        📋 Copiar
+      </button>
+      <button class="btn-export-excel" (click)="exportToExcel()" [disabled]="otherAnalystsIncidents.length === 0">
+        📅 Excel
+      </button>
+    </div>
   </div>
 
   <!-- Mensaje de copiado -->
