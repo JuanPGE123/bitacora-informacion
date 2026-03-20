@@ -2,10 +2,17 @@
 import { CommonModule } from '@angular/common';
 import { IncidentService } from '../../../core/services/incident.service';
 import { ExportService } from '../../../core/services/export.service';
-import { Incident } from '../../../core/models/incident.model';
+import { Incident, IncidentUrgency } from '../../../core/models/incident.model';
 
 interface ExternalTicketGroup {
   ticketName: string;
+  count: number;
+  incidents: Incident[];
+  expanded: boolean;
+}
+
+interface AnalystUrgentGroup {
+  analyst: string;
   count: number;
   incidents: Incident[];
   expanded: boolean;
@@ -35,6 +42,16 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
   highSLAIncidents: Incident[] = [];
   highSLACount: number = 0;
   highSLAExpanded: boolean = false;
+  
+  // Incidentes Urgentes que Cumplen ANS (Crítica y Alta)
+  urgentMeetsSLAGroups: AnalystUrgentGroup[] = [];
+  urgentMeetsSLACount: number = 0;
+  urgentMeetsSLAExpanded: boolean = false;
+  
+  // Incidentes Reabiertos
+  reopenedIncidents: Incident[] = [];
+  reopenedCount: number = 0;
+  reopenedExpanded: boolean = false;
   
   copiedMessage: string = '';
 
@@ -85,6 +102,44 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
         i.slaTime !== undefined && i.slaTime >= 66.5
       ).sort((a, b) => (b.slaTime || 0) - (a.slaTime || 0));
       this.highSLACount = this.highSLAIncidents.length;
+      
+      // 5. Filtrar incidentes urgentes (Crítica y Alta) que cumplen ANS, agrupar por analista
+      const urgentMeetsSLA = incidents.filter(i => 
+        (i.urgency === IncidentUrgency.CRITICAL || i.urgency === IncidentUrgency.HIGH) && 
+        i.meetsSla === true
+      );
+      
+      const analystGroups = new Map<string, Incident[]>();
+      urgentMeetsSLA.forEach(incident => {
+        const analyst = incident.assignedAnalyst || 'Sin Asignar';
+        if (!analystGroups.has(analyst)) {
+          analystGroups.set(analyst, []);
+        }
+        analystGroups.get(analyst)!.push(incident);
+      });
+      
+      this.urgentMeetsSLAGroups = Array.from(analystGroups.entries())
+        .map(([analyst, incidents]) => ({
+          analyst,
+          count: incidents.length,
+          incidents: incidents.sort((a, b) => 
+            (a.incidentNumber || '').localeCompare(b.incidentNumber || '')
+          ),
+          expanded: false
+        }))
+        .sort((a, b) => b.count - a.count);
+      
+      this.urgentMeetsSLACount = urgentMeetsSLA.length;
+      
+      // 6. Filtrar incidentes reabiertos
+      this.reopenedIncidents = incidents.filter(i => 
+        i.reopenDate !== undefined && i.reopenDate !== null
+      ).sort((a, b) => {
+        const dateA = new Date(a.reopenDate!).getTime();
+        const dateB = new Date(b.reopenDate!).getTime();
+        return dateB - dateA; // Más recientes primero
+      });
+      this.reopenedCount = this.reopenedIncidents.length;
     });
   }
 
@@ -98,6 +153,18 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
 
   toggleHighSLA(): void {
     this.highSLAExpanded = !this.highSLAExpanded;
+  }
+
+  toggleUrgentMeetsSLA(): void {
+    this.urgentMeetsSLAExpanded = !this.urgentMeetsSLAExpanded;
+  }
+
+  toggleAnalystUrgentGroup(group: AnalystUrgentGroup): void {
+    group.expanded = !group.expanded;
+  }
+
+  toggleReopened(): void {
+    this.reopenedExpanded = !this.reopenedExpanded;
   }
 
   copyDynatraceIncidents(): void {
@@ -115,6 +182,22 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
     this.copyToClipboard(incidentNumbers, `${group.count} números de incidente copiados`);
   }
 
+  copyAnalystUrgentIncidents(group: AnalystUrgentGroup): void {
+    const incidentList = group.incidents.map(i => i.incidentNumber).join('\n');
+    this.copyToClipboard(incidentList, `${group.count} incidentes de ${group.analyst} copiados`);
+  }
+
+  copyAllUrgentMeetsSLA(): void {
+    const allIncidents = this.urgentMeetsSLAGroups.flatMap(g => g.incidents);
+    const incidentList = allIncidents.map(i => i.incidentNumber).join('\n');
+    this.copyToClipboard(incidentList, `${this.urgentMeetsSLACount} incidentes urgentes copiados`);
+  }
+
+  copyReopenedIncidents(): void {
+    const incidentList = this.reopenedIncidents.map(i => i.incidentNumber).join('\n');
+    this.copyToClipboard(incidentList, `${this.reopenedCount} incidentes reabiertos copiados`);
+  }
+
   // Métodos de exportación Excel
   exportTicketGroupsToExcel(): void {
     const allIncidents: Incident[] = [];
@@ -130,6 +213,15 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
 
   exportHighSLAToExcel(): void {
     this.exportService.exportToExcel(this.highSLAIncidents, 'incidentes_ans_alto');
+  }
+
+  exportUrgentMeetsSLAToExcel(): void {
+    const allIncidents = this.urgentMeetsSLAGroups.flatMap(g => g.incidents);
+    this.exportService.exportToExcel(allIncidents, 'incidentes_urgentes_cumplen_ans');
+  }
+
+  exportReopenedToExcel(): void {
+    this.exportService.exportToExcel(this.reopenedIncidents, 'incidentes_reabiertos');
   }
 
   exportAllSectionsToExcel(): void {

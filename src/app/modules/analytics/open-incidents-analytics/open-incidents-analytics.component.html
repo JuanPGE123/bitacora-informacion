@@ -1,7 +1,63 @@
 ﻿<div class="analytics-container">
-  <div class="analytics-header">
-    <h1>Análisis de Incidentes Abiertos</h1>
-    <p class="subtitle">Métricas y agrupaciones de incidentes en estado abierto</p>
+  <!-- Header Moderno con Dashboard de Métricas -->
+  <div class="analytics-header-modern">
+    <div class="header-top">
+      <div class="header-title">
+        <h1>📊 Análisis de Incidentes Abiertos</h1>
+        <p class="subtitle">Panel empresarial de métricas y gestión de incidentes</p>
+      </div>
+    </div>
+
+    <!-- Dashboard de 6 Métricas KPI -->
+    <div class="metrics-dashboard">
+      <div class="metric-card metric-external">
+        <div class="metric-icon">✅</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ incidentsWithExternalTicket }}</div>
+          <div class="metric-label">Con External Ticket</div>
+        </div>
+      </div>
+
+      <div class="metric-card metric-no-external">
+        <div class="metric-icon">❌</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ incidentsWithoutExternalTicket }}</div>
+          <div class="metric-label">Sin External Ticket</div>
+        </div>
+      </div>
+
+      <div class="metric-card metric-urgent">
+        <div class="metric-icon">🔥</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ urgentMeetsSLACount }}</div>
+          <div class="metric-label">Urgentes Cumple ANS</div>
+        </div>
+      </div>
+
+      <div class="metric-card metric-reopened">
+        <div class="metric-icon">🔄</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ reopenedCount }}</div>
+          <div class="metric-label">Incidentes Reabiertos</div>
+        </div>
+      </div>
+
+      <div class="metric-card metric-dynatrace">
+        <div class="metric-icon">🔧</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ dynatraceCount }}</div>
+          <div class="metric-label">Incidentes Dynatrace</div>
+        </div>
+      </div>
+
+      <div class="metric-card metric-risk">
+        <div class="metric-icon">⚠️</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ highSLACount }}</div>
+          <div class="metric-label">Riesgo Alto SLA</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Mensaje de copiado -->
@@ -9,28 +65,120 @@
     ✅ {{ copiedMessage }}
   </div>
 
-  <!-- Sección 1: Contadores de External Ticket -->
-  <div class="section-card">
-    <h2 class="section-title">📊 Resumen de External Tickets</h2>
-    <div class="stats-grid">
-      <div class="stat-box stat-with">
-        <div class="stat-icon">✅</div>
-        <div class="stat-info">
-          <div class="stat-value">{{ incidentsWithExternalTicket }}</div>
-          <div class="stat-label">Con External Ticket</div>
+  <!-- NUEVA SECCIÓN: Urgencias Críticas y Altas - Cumpliendo ANS -->
+  <div class="section-card priority-section">
+    <div class="section-header">
+      <div class="section-title-group">
+        <h2 class="section-title">🔥 Urgencias Críticas y Altas - Cumpliendo ANS</h2>
+        <span class="badge badge-warning">{{ urgentMeetsSLACount }} incidente{{ urgentMeetsSLACount !== 1 ? 's' : '' }}</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-copy" (click)="copyAllUrgentMeetsSLA()" [disabled]="urgentMeetsSLACount === 0">
+          📋 Copiar Lista Completa
+        </button>
+        <button class="btn-export-excel" (click)="exportUrgentMeetsSLAToExcel()" [disabled]="urgentMeetsSLACount === 0">
+          📥 Excel
+        </button>
+        <span class="expand-icon" (click)="toggleUrgentMeetsSLA()" style="cursor: pointer; font-size: 1.25rem; color: #64748b;">
+          {{ urgentMeetsSLAExpanded ? '▼' : '▶' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="analyst-urgent-groups" *ngIf="urgentMeetsSLAExpanded">
+      <div class="analyst-group-card" *ngFor="let group of urgentMeetsSLAGroups">
+        <div class="group-header" (click)="toggleAnalystUrgentGroup(group)">
+          <div class="group-info">
+            <h3>👤 {{ group.analyst }}</h3>
+            <span class="badge badge-info">{{ group.count }} incidente{{ group.count !== 1 ? 's' : '' }}</span>
+          </div>
+          <div class="group-actions">
+            <button class="btn-copy-small" (click)="copyAnalystUrgentIncidents(group); $event.stopPropagation()">
+              📋 Copiar Lista
+            </button>
+            <span class="expand-icon">{{ group.expanded ? '▼' : '▶' }}</span>
+          </div>
+        </div>
+
+        <div class="incidents-list-vertical" *ngIf="group.expanded">
+          <div class="incident-item" *ngFor="let incident of group.incidents">
+            <span class="incident-number">{{ incident.incidentNumber }}</span>
+            <span class="urgency-badge" [ngClass]="'urgency-' + incident.urgency.toLowerCase()">
+              {{ incident.urgency }}
+            </span>
+          </div>
         </div>
       </div>
-      <div class="stat-box stat-without">
-        <div class="stat-icon">❌</div>
-        <div class="stat-info">
-          <div class="stat-value">{{ incidentsWithoutExternalTicket }}</div>
-          <div class="stat-label">Sin External Ticket</div>
-        </div>
+
+      <div class="empty-state" *ngIf="urgentMeetsSLACount === 0">
+        <p>No hay incidentes urgentes (Crítico/Alto) cumpliendo ANS</p>
       </div>
     </div>
   </div>
 
-  <!-- Sección 2: Agrupación por External Ticket -->
+  <!-- NUEVA SECCIÓN: Incidentes Reabiertos -->
+  <div class="section-card reopened-section">
+    <div class="section-header">
+      <div class="section-title-group">
+        <h2 class="section-title">🔄 Incidentes Reabiertos</h2>
+        <span class="badge badge-danger">{{ reopenedCount }} incidente{{ reopenedCount !== 1 ? 's' : '' }}</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-copy" (click)="copyReopenedIncidents()" [disabled]="reopenedCount === 0">
+          📋 Copiar Lista
+        </button>
+        <button class="btn-export-excel" (click)="exportReopenedToExcel()" [disabled]="reopenedCount === 0">
+          📥 Excel
+        </button>
+      </div>
+    </div>
+
+    <div class="reopened-content">
+      <div class="reopened-header-toggle" (click)="toggleReopened()">
+        <h3>Ver Detalles de Incidentes Reabiertos</h3>
+        <span class="expand-icon">{{ reopenedExpanded ? '▼' : '▶' }}</span>
+      </div>
+
+      <div class="incidents-table-wrapper" *ngIf="reopenedExpanded && reopenedCount > 0">
+        <table class="incidents-table">
+          <thead>
+            <tr>
+              <th>No. Incidente</th>
+              <th>Analista</th>
+              <th>Fecha Reapertura</th>
+              <th>Fecha Apertura Original</th>
+              <th>Urgency</th>
+              <th>Prioridad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let incident of reopenedIncidents">
+              <td class="incident-number-cell">{{ incident.incidentNumber }}</td>
+              <td>{{ incident.assignedAnalyst || 'Sin Asignar' }}</td>
+              <td class="highlight-date">{{ formatDate(incident.reopenDate!) }}</td>
+              <td>{{ formatDate(incident.openDate) }}</td>
+              <td>
+                <span class="urgency-badge" [ngClass]="'urgency-' + incident.urgency.toLowerCase()">
+                  {{ incident.urgency }}
+                </span>
+              </td>
+              <td>
+                <span class="priority-badge" [ngClass]="'priority-' + incident.priority.toLowerCase()">
+                  {{ incident.priority }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="empty-state" *ngIf="reopenedCount === 0">
+        <p>No hay incidentes reabiertos</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección: Agrupación por External Ticket -->
   <div class="section-card">
     <div class="section-header">
       <h2 class="section-title">🎫 Incidentes por External Ticket</h2>
@@ -43,10 +191,10 @@
         <div class="ticket-header" (click)="toggleTicketGroup(group)">
           <div class="ticket-info">
             <h3>{{ group.ticketName }}</h3>
-            <span class="badge">{{ group.count }} incidente{{ group.count !== 1 ? 's' : '' }}</span>
+            <span class="badge badge-primary">{{ group.count }} incidente{{ group.count !== 1 ? 's' : '' }}</span>
           </div>
           <div class="ticket-actions">
-            <button class="btn-copy" (click)="copyTicketGroupIncidents(group); $event.stopPropagation()">
+            <button class="btn-copy-small" (click)="copyTicketGroupIncidents(group); $event.stopPropagation()">
               📋 Copiar
             </button>
             <span class="expand-icon">{{ group.expanded ? '▼' : '▶' }}</span>
@@ -65,7 +213,7 @@
             </thead>
             <tbody>
               <tr *ngFor="let incident of group.incidents">
-                <td>{{ incident.incidentNumber }}</td>
+                <td class="incident-number-cell">{{ incident.incidentNumber }}</td>
                 <td>{{ formatDate(incident.openDate) }}</td>
                 <td>{{ incident.assignedAnalyst || 'Sin Asignar' }}</td>
                 <td>
@@ -85,7 +233,7 @@
     </div>
   </div>
 
-  <!-- Sección 3: Incidentes Dynatrace -->
+  <!-- Sección: Incidentes Dynatrace -->
   <div class="section-card">
     <div class="section-header">
       <h2 class="section-title">🔧 Incidentes Dynatrace</h2>
@@ -100,8 +248,8 @@
           <span class="badge badge-dynatrace">{{ dynatraceCount }} incidente{{ dynatraceCount !== 1 ? 's' : '' }}</span>
         </div>
         <div class="dynatrace-actions">
-          <button class="btn-copy" (click)="copyDynatraceIncidents(); $event.stopPropagation()" [disabled]="dynatraceCount === 0">
-            📋 Copiar Incidentes
+          <button class="btn-copy-small" (click)="copyDynatraceIncidents(); $event.stopPropagation()" [disabled]="dynatraceCount === 0">
+            📋 Copiar
           </button>
           <span class="expand-icon">{{ dynatraceExpanded ? '▼' : '▶' }}</span>
         </div>
@@ -120,7 +268,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let incident of dynatraceIncidents">
-              <td>{{ incident.incidentNumber }}</td>
+              <td class="incident-number-cell">{{ incident.incidentNumber }}</td>
               <td>{{ incident.externalTicket || 'Sin External Ticket' }}</td>
               <td>{{ formatDate(incident.openDate) }}</td>
               <td>{{ incident.assignedAnalyst || 'Sin Asignar' }}</td>
@@ -140,8 +288,8 @@
     </div>
   </div>
 
-  <!-- Sección 4: Incidentes con Tiempo ANS >= 66.5 -->
-  <div class="section-card">
+  <!-- Sección: Riesgo Alto de SLA -->
+  <div class="section-card risk-section">
     <div class="section-header">
       <h2 class="section-title">⚠️ Incidentes con Tiempo ANS ≥ 66.5 horas</h2>
       <button class="btn-export-excel" (click)="exportHighSLAToExcel()" [disabled]="highSLACount === 0">
@@ -155,7 +303,7 @@
           <span class="badge badge-danger">{{ highSLACount }} incidente{{ highSLACount !== 1 ? 's' : '' }}</span>
         </div>
         <div class="high-sla-actions">
-          <button class="btn-copy" (click)="copyHighSLAIncidents(); $event.stopPropagation()" [disabled]="highSLACount === 0">
+          <button class="btn-copy-small" (click)="copyHighSLAIncidents(); $event.stopPropagation()" [disabled]="highSLACount === 0">
             📋 Copiar
           </button>
           <span class="expand-icon">{{ highSLAExpanded ? '▼' : '▶' }}</span>
@@ -176,7 +324,7 @@
           </thead>
           <tbody>
             <tr *ngFor="let incident of highSLAIncidents">
-              <td>{{ incident.incidentNumber }}</td>
+              <td class="incident-number-cell">{{ incident.incidentNumber }}</td>
               <td>{{ incident.assignedAnalyst || 'Sin Asignar' }}</td>
               <td class="highlight-sla">{{ incident.slaTime?.toFixed(2) }}</td>
               <td>{{ incident.externalTicket || 'Sin External Ticket' }}</td>
