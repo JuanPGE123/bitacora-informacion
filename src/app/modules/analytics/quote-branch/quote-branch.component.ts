@@ -104,9 +104,9 @@ export class QuoteBranchComponent implements OnInit {
   formatDate(date: Date): string {
     if (!date) return '-';
     const d = new Date(date);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const year = d.getUTCFullYear();
     return `${day}/${month}/${year}`;
   }
 

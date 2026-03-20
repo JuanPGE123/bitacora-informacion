@@ -194,11 +194,11 @@ export class IncidentTableComponent implements OnInit, OnChanges {
   }
 
   formatDate(date: Date): string {
-    return new Date(date).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+    const d = new Date(date);
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const year = d.getUTCFullYear();
+    return `${day}/${month}/${year}`;
   }
 
   getPriorityClass(priority: IncidentPriority): string {

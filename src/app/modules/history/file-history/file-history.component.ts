@@ -23,13 +23,13 @@ export class FileHistoryComponent implements OnInit {
   }
 
   formatDate(date: Date): string {
-    return new Date(date).toLocaleString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const d = new Date(date);
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const year = d.getUTCFullYear();
+    const hours = String(d.getUTCHours()).padStart(2, '0');
+    const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   }
 
   formatFileSize(bytes: number): string {
