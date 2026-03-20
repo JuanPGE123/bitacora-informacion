@@ -183,6 +183,8 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  position: relative;
+  overflow: hidden;
 
   &:hover {
     background: linear-gradient(135deg, #4338ca, #3730a3);
@@ -196,7 +198,12 @@
 }
 
 .file-input {
-  display: none;
+  position: absolute;
+  opacity: 0;
+  width: 0.1px;
+  height: 0.1px;
+  overflow: hidden;
+  z-index: -1;
 }
 
 .supported-formats {
