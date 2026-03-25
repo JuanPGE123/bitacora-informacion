@@ -196,3 +196,86 @@
     }
   }
 }
+
+// Estilos para badges de prioridad
+.priority-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-block;
+
+  &.priority-critical,
+  &.priority-crítica {
+    background-color: #fee2e2;
+    color: #dc2626;
+  }
+
+  &.priority-high,
+  &.priority-alta {
+    background-color: #fed7aa;
+    color: #ea580c;
+  }
+
+  &.priority-medium,
+  &.priority-media {
+    background-color: #fef3c7;
+    color: #ca8a04;
+  }
+
+  &.priority-low,
+  &.priority-baja {
+    background-color: #dcfce7;
+    color: #16a34a;
+  }
+}
+
+// Animación para mensaje de copiado
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+// Estilos adicionales para botones
+.btn-export-excel {
+  &:hover {
+    background-color: #16a34a;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  &:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 0.6;
+
+    &:hover {
+      background-color: #9ca3af;
+      transform: none;
+      box-shadow: none;
+    }
+  }
+}
+
+.btn-copy-small {
+  &:hover {
+    background-color: #475569;
+    transform: translateY(-1px);
+  }
+}
+
+// Efectos hover para las tarjetas de ticket
+.ticket-group-card {
+  .ticket-header {
+    &:hover {
+      background-color: #f1f5f9;
+    }
+  }
+}
+
