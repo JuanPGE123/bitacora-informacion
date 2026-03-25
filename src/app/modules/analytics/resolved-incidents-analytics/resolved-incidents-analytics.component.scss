@@ -263,6 +263,15 @@
   }
 }
 
+// Botón específico para resumen (azul)
+button.btn-export-excel[style*="background-color: #3b82f6"] {
+  &:hover:not(:disabled) {
+    background-color: #2563eb !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+  }
+}
+
 .btn-copy-small {
   &:hover {
     background-color: #475569;

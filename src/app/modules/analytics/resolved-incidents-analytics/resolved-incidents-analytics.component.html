@@ -112,14 +112,20 @@
 
   <!-- Sección: Agrupación por External Ticket -->
   <div class="section-card" style="margin-bottom: 2rem; background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
       <h2 class="section-title" style="font-size: 1.5rem; font-weight: 600; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
         🎫 Incidentes Resueltos por External Ticket
       </h2>
-      <button class="btn-export-excel" (click)="exportTicketGroupsToExcel()" [disabled]="externalTicketGroups.length === 0" 
-        style="background-color: #22c55e; color: white; padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s;">
-        📥 Exportar Excel
-      </button>
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button class="btn-export-excel" (click)="exportTicketGroupsSummaryToExcel()" [disabled]="externalTicketGroups.length === 0" 
+          style="background-color: #3b82f6; color: white; padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; font-size: 0.875rem;">
+          📊 Resumen Excel
+        </button>
+        <button class="btn-export-excel" (click)="exportTicketGroupsToExcel()" [disabled]="externalTicketGroups.length === 0" 
+          style="background-color: #22c55e; color: white; padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; font-size: 0.875rem;">
+          📥 Detallado Excel
+        </button>
+      </div>
     </div>
     <div class="ticket-groups">
       <div class="ticket-group-card" *ngFor="let group of externalTicketGroups" 

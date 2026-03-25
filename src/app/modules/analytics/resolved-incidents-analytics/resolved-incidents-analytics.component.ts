@@ -6,6 +6,7 @@ import { IncidentService } from '../../../core/services/incident.service';
 import { KpiService } from '../../../core/services/kpi.service';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { Incident, IncidentPriority } from '../../../core/models/incident.model';
+import * as XLSX from 'xlsx';
 
 // Registrar componentes de Chart.js
 Chart.register(...registerables);
@@ -513,6 +514,23 @@ export class ResolvedIncidentsAnalyticsComponent implements OnInit, AfterViewIni
       allIncidents.push(...group.incidents);
     });
     this.exportService.exportToExcel(allIncidents, 'incidentes_resueltos_por_external_ticket');
+  }
+
+  exportTicketGroupsSummaryToExcel(): void {
+    // Crear datos de resumen: solo agrupador y cantidad
+    const summaryData = this.externalTicketGroups.map(group => ({
+      'External Ticket': group.ticketName,
+      'Cantidad de Incidentes': group.count
+    }));
+
+    // Crear hoja de Excel
+    const ws = XLSX.utils.json_to_sheet(summaryData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Resumen');
+    
+    // Generar timestamp
+    const timestamp = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    XLSX.writeFile(wb, `resumen_external_tickets_resueltos_${timestamp}.xlsx`);
   }
 
   formatDate(date: Date): string {
