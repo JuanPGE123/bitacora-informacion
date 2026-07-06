@@ -5,6 +5,7 @@ import { IncidentService } from '../../../core/services/incident.service';
 import { NotionService, AnalystNotionData } from '../../../core/services/notion.service';
 import { ExportService } from '../../../core/services/export.service';
 import { Incident, IncidentPriority } from '../../../core/models/incident.model';
+import { buildIncidentsTsv } from '../../../core/utils/clipboard-table.util';
 
 interface AnalystGroup {
   analyst: string;
@@ -65,8 +66,13 @@ export class ByAnalystComponent implements OnInit {
   }
 
   copyAnalystIncidents(group: AnalystGroup): void {
-    const incidentNumbers = group.incidents.map(i => i.incidentNumber).join(', ');
-    this.copyToClipboard(incidentNumbers, `${group.count} números de incidente copiados`);
+    const tsv = buildIncidentsTsv(group.incidents.map(i => ({
+      'No. Incidente': i.incidentNumber,
+      'External Ticket': i.externalTicket || 'Sin External Ticket',
+      'Fecha Apertura': this.formatDate(i.openDate),
+      'Prioridad': i.priority
+    })));
+    this.copyToClipboard(tsv, `${group.count} incidentes copiados`);
   }
 
   exportAnalystToExcel(group: AnalystGroup): void {

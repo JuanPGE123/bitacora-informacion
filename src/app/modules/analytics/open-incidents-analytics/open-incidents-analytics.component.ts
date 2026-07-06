@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IncidentService } from '../../../core/services/incident.service';
 import { ExportService } from '../../../core/services/export.service';
 import { Incident, IncidentUrgency } from '../../../core/models/incident.model';
+import { buildIncidentsTsv } from '../../../core/utils/clipboard-table.util';
 
 interface ExternalTicketGroup {
   ticketName: string;
@@ -37,11 +38,6 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
   dynatraceIncidents: Incident[] = [];
   dynatraceCount: number = 0;
   dynatraceExpanded: boolean = false;
-  
-  // Incidentes con ANS >= 66.5
-  highSLAIncidents: Incident[] = [];
-  highSLACount: number = 0;
-  highSLAExpanded: boolean = false;
   
   // Incidentes Urgentes que Cumplen ANS (Crítica y Alta)
   urgentMeetsSLAGroups: AnalystUrgentGroup[] = [];
@@ -97,12 +93,6 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
       ).sort((a, b) => (a.incidentNumber || '').localeCompare(b.incidentNumber || ''));
       this.dynatraceCount = this.dynatraceIncidents.length;
       
-      // 4. Filtrar incidentes con ANS >= 66.5
-      this.highSLAIncidents = incidents.filter(i => 
-        i.slaTime !== undefined && i.slaTime >= 66.5
-      ).sort((a, b) => (b.slaTime || 0) - (a.slaTime || 0));
-      this.highSLACount = this.highSLAIncidents.length;
-      
       // 5. Filtrar incidentes urgentes (Crítica y Alta) que cumplen ANS, agrupar por analista
       const urgentMeetsSLA = incidents.filter(i => 
         (i.urgency === IncidentUrgency.CRITICAL || i.urgency === IncidentUrgency.HIGH) && 
@@ -151,10 +141,6 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
     this.dynatraceExpanded = !this.dynatraceExpanded;
   }
 
-  toggleHighSLA(): void {
-    this.highSLAExpanded = !this.highSLAExpanded;
-  }
-
   toggleUrgentMeetsSLA(): void {
     this.urgentMeetsSLAExpanded = !this.urgentMeetsSLAExpanded;
   }
@@ -168,34 +154,54 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
   }
 
   copyDynatraceIncidents(): void {
-    const incidentNumbers = this.dynatraceIncidents.map(i => i.incidentNumber).join(', ');
-    this.copyToClipboard(incidentNumbers, `${this.dynatraceCount} números de incidente copiados`);
-  }
-
-  copyHighSLAIncidents(): void {
-    const incidentNumbers = this.highSLAIncidents.map(i => i.incidentNumber).join(', ');
-    this.copyToClipboard(incidentNumbers, `${this.highSLACount} números de incidente copiados`);
+    const tsv = buildIncidentsTsv(this.dynatraceIncidents.map(i => ({
+      'No. Incidente': i.incidentNumber,
+      'External Ticket': i.externalTicket || 'Sin External Ticket',
+      'Fecha Apertura': this.formatDate(i.openDate),
+      'Analista': i.assignedAnalyst || 'Sin Asignar',
+      'Prioridad': i.priority
+    })));
+    this.copyToClipboard(tsv, `${this.dynatraceCount} incidentes copiados`);
   }
 
   copyTicketGroupIncidents(group: ExternalTicketGroup): void {
-    const incidentNumbers = group.incidents.map(i => i.incidentNumber).join(', ');
-    this.copyToClipboard(incidentNumbers, `${group.count} números de incidente copiados`);
+    const tsv = buildIncidentsTsv(group.incidents.map(i => ({
+      'No. Incidente': i.incidentNumber,
+      'Fecha Apertura': this.formatDate(i.openDate),
+      'Analista': i.assignedAnalyst || 'Sin Asignar',
+      'Prioridad': i.priority
+    })));
+    this.copyToClipboard(tsv, `${group.count} incidentes copiados`);
   }
 
   copyAnalystUrgentIncidents(group: AnalystUrgentGroup): void {
-    const incidentList = group.incidents.map(i => i.incidentNumber).join('\n');
-    this.copyToClipboard(incidentList, `${group.count} incidentes de ${group.analyst} copiados`);
+    const tsv = buildIncidentsTsv(group.incidents.map(i => ({
+      'No. Incidente': i.incidentNumber,
+      'Urgencia': i.urgency
+    })));
+    this.copyToClipboard(tsv, `${group.count} incidentes de ${group.analyst} copiados`);
   }
 
   copyAllUrgentMeetsSLA(): void {
     const allIncidents = this.urgentMeetsSLAGroups.flatMap(g => g.incidents);
-    const incidentList = allIncidents.map(i => i.incidentNumber).join('\n');
-    this.copyToClipboard(incidentList, `${this.urgentMeetsSLACount} incidentes urgentes copiados`);
+    const tsv = buildIncidentsTsv(allIncidents.map(i => ({
+      'No. Incidente': i.incidentNumber,
+      'Analista': i.assignedAnalyst || 'Sin Asignar',
+      'Urgencia': i.urgency
+    })));
+    this.copyToClipboard(tsv, `${this.urgentMeetsSLACount} incidentes urgentes copiados`);
   }
 
   copyReopenedIncidents(): void {
-    const incidentList = this.reopenedIncidents.map(i => i.incidentNumber).join('\n');
-    this.copyToClipboard(incidentList, `${this.reopenedCount} incidentes reabiertos copiados`);
+    const tsv = buildIncidentsTsv(this.reopenedIncidents.map(i => ({
+      'No. Incidente': i.incidentNumber,
+      'Analista': i.assignedAnalyst || 'Sin Asignar',
+      'Fecha Reapertura': i.reopenDate ? this.formatDate(i.reopenDate) : '-',
+      'Fecha Apertura Original': this.formatDate(i.openDate),
+      'Urgencia': i.urgency,
+      'Prioridad': i.priority
+    })));
+    this.copyToClipboard(tsv, `${this.reopenedCount} incidentes reabiertos copiados`);
   }
 
   // Métodos de exportación Excel
@@ -211,10 +217,6 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
     this.exportService.exportToExcel(this.dynatraceIncidents, 'incidentes_dynatrace');
   }
 
-  exportHighSLAToExcel(): void {
-    this.exportService.exportToExcel(this.highSLAIncidents, 'incidentes_ans_alto');
-  }
-
   exportUrgentMeetsSLAToExcel(): void {
     const allIncidents = this.urgentMeetsSLAGroups.flatMap(g => g.incidents);
     this.exportService.exportToExcel(allIncidents, 'incidentes_urgentes_cumplen_ans');
@@ -227,8 +229,7 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
   exportAllSectionsToExcel(): void {
     const allIncidents = [
       ...this.externalTicketGroups.flatMap(g => g.incidents),
-      ...this.dynatraceIncidents,
-      ...this.highSLAIncidents
+      ...this.dynatraceIncidents
     ];
     // Eliminar duplicados
     const unique = Array.from(new Set(allIncidents.map(i => i.incidentNumber)))

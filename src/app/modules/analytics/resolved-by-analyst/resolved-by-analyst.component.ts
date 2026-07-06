@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angula
 import { CommonModule } from '@angular/common';
 import { IncidentService } from '../../../core/services/incident.service';
 import { Incident } from '../../../core/models/incident.model';
+import { buildIncidentsTsv } from '../../../core/utils/clipboard-table.util';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -243,16 +244,14 @@ export class ResolvedByAnalystComponent implements OnInit, AfterViewInit {
   }
 
   private formatIncidentsForCopy(incidents: Incident[]): string {
-    let text = '| No. Incidente | External Ticket | Fecha Apertura | Fecha Solución | Analista |\n';
-    text += '|---------------|-----------------|----------------|----------------|----------|\n';
-    incidents.forEach(incident => {
-      const ticket = incident.externalTicket || 'Sin External Ticket';
-      const openDate = this.formatDate(incident.openDate);
-      const solutionDate = incident.solutionDate ? this.formatDate(incident.solutionDate) : '-';
-      const analyst = incident.assignedAnalyst || 'Sin Asignar';
-      text += `| ${incident.incidentNumber} | ${ticket} | ${openDate} | ${solutionDate} | ${analyst} |\n`;
-    });
-    return text;
+    return buildIncidentsTsv(incidents.map(incident => ({
+      'No. Incidente': incident.incidentNumber,
+      'External Ticket': incident.externalTicket || 'Sin External Ticket',
+      'Fecha Apertura': this.formatDate(incident.openDate),
+      'Fecha Solución': incident.solutionDate ? this.formatDate(incident.solutionDate) : '-',
+      'Analista': incident.assignedAnalyst || 'Sin Asignar',
+      'Prioridad': incident.priority
+    })));
   }
 
   formatDate(date: Date): string {

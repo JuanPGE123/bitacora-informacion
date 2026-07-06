@@ -7,9 +7,10 @@ import { AnalyticsComponent } from './modules/analytics/analytics/analytics.comp
 import { OpenIncidentsAnalyticsComponent } from './modules/analytics/open-incidents-analytics/open-incidents-analytics.component';
 import { ResolvedIncidentsAnalyticsComponent } from './modules/analytics/resolved-incidents-analytics/resolved-incidents-analytics.component';
 import { ByAnalystComponent } from './modules/analytics/by-analyst/by-analyst.component';
-import { QuoteBranchComponent } from './modules/analytics/quote-branch/quote-branch.component';
 import { ResolvedByAnalystComponent } from './modules/analytics/resolved-by-analyst/resolved-by-analyst.component';
 import { FileHistoryComponent } from './modules/history/file-history/file-history.component';
+import { SlaOpenComponent } from './modules/analytics/sla-open/sla-open.component';
+import { SlaResolvedComponent } from './modules/analytics/sla-resolved/sla-resolved.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
@@ -21,8 +22,9 @@ export const routes: Routes = [
   { path: 'analytics/open', component: OpenIncidentsAnalyticsComponent },
   { path: 'analytics/resolved', component: ResolvedIncidentsAnalyticsComponent },
   { path: 'analytics/by-analyst', component: ByAnalystComponent },
-  { path: 'analytics/quote-branch', component: QuoteBranchComponent },
   { path: 'analytics/resolved-by-analyst', component: ResolvedByAnalystComponent },
+  { path: 'analytics/sla-open', component: SlaOpenComponent },
+  { path: 'analytics/sla-resolved', component: SlaResolvedComponent },
   { path: 'history', component: FileHistoryComponent },
   { path: '**', redirectTo: '/dashboard' }
 ];

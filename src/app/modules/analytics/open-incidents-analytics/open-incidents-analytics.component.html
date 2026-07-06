@@ -49,14 +49,6 @@
           <div class="metric-label">Incidentes Dynatrace</div>
         </div>
       </div>
-
-      <div class="metric-card metric-risk">
-        <div class="metric-icon">⚠️</div>
-        <div class="metric-content">
-          <div class="metric-value">{{ highSLACount }}</div>
-          <div class="metric-label">Riesgo Alto SLA</div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -288,60 +280,4 @@
     </div>
   </div>
 
-  <!-- Sección: Riesgo Alto de SLA -->
-  <div class="section-card risk-section">
-    <div class="section-header">
-      <h2 class="section-title">⚠️ Incidentes con Tiempo ANS ≥ 66.5 horas</h2>
-      <button class="btn-export-excel" (click)="exportHighSLAToExcel()" [disabled]="highSLACount === 0">
-        📥 Excel
-      </button>
-    </div>
-    <div class="high-sla-section">
-      <div class="high-sla-header" (click)="toggleHighSLA()">
-        <div class="high-sla-info">
-          <h3>Incidentes en Riesgo de SLA</h3>
-          <span class="badge badge-danger">{{ highSLACount }} incidente{{ highSLACount !== 1 ? 's' : '' }}</span>
-        </div>
-        <div class="high-sla-actions">
-          <button class="btn-copy-small" (click)="copyHighSLAIncidents(); $event.stopPropagation()" [disabled]="highSLACount === 0">
-            📋 Copiar
-          </button>
-          <span class="expand-icon">{{ highSLAExpanded ? '▼' : '▶' }}</span>
-        </div>
-      </div>
-
-      <div class="incidents-list" *ngIf="highSLAExpanded && highSLACount > 0">
-        <table class="incidents-table">
-          <thead>
-            <tr>
-              <th>No. Incidente</th>
-              <th>Analista Asignado</th>
-              <th>Tiempo ANS (horas)</th>
-              <th>External Ticket</th>
-              <th>Fecha Apertura</th>
-              <th>Prioridad</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let incident of highSLAIncidents">
-              <td class="incident-number-cell">{{ incident.incidentNumber }}</td>
-              <td>{{ incident.assignedAnalyst || 'Sin Asignar' }}</td>
-              <td class="highlight-sla">{{ incident.slaTime?.toFixed(2) }}</td>
-              <td>{{ incident.externalTicket || 'Sin External Ticket' }}</td>
-              <td>{{ formatDate(incident.openDate) }}</td>
-              <td>
-                <span class="priority-badge" [ngClass]="'priority-' + incident.priority.toLowerCase()">
-                  {{ incident.priority }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="empty-state" *ngIf="highSLACount === 0">
-        <p>No hay incidentes con tiempo ANS >= 66.5 horas</p>
-      </div>
-    </div>
-  </div>
 </div>

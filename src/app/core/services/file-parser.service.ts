@@ -134,23 +134,9 @@ export class FileParserService {
         try {
           const data = new Uint8Array(e.target.result);
           const workbook = XLSX.read(data, { type: 'array' });
-          
-          // Buscar hoja "1-Untitled" primero, si no existe usar la primera hoja
-          let targetSheet: any;
-          if (workbook.SheetNames.includes('1-Untitled')) {
-            targetSheet = workbook.Sheets['1-Untitled'];
-          } else {
-            // Fallback a la primera hoja que no sea resumen
-            const sheetName = workbook.SheetNames.find(name => 
-              !name.toLowerCase().includes('hoja1') && 
-              !name.toLowerCase().includes('resumen') &&
-              !name.toLowerCase().includes('summary')
-            ) || workbook.SheetNames[0];
-            targetSheet = workbook.Sheets[sheetName];
-          }
-          
-          const jsonData = XLSX.utils.sheet_to_json(targetSheet);
-          
+
+          const jsonData = this.selectIncidentSheet(workbook);
+
           resolve(jsonData);
         } catch (error) {
           reject(error);
@@ -166,6 +152,35 @@ export class FileParserService {
   }
 
   /**
+   * Selecciona la hoja de datos de incidentes dentro del libro.
+   * El nombre de la hoja de datos varía entre exportaciones (p.ej. "1-Untitled", "2-Untitled (1)"),
+   * por lo que se identifica por su contenido (columna "No. Incidente") en vez de por nombre exacto.
+   */
+  private selectIncidentSheet(workbook: XLSX.WorkBook): any[] {
+    let bestSheetData: any[] = [];
+
+    for (const sheetName of workbook.SheetNames) {
+      const sheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json<any>(sheet);
+
+      if (jsonData.length === 0) continue;
+
+      const headers = Object.keys(jsonData[0]);
+      const hasIncidentColumn = headers.some(h => h.trim().toLowerCase() === 'no. incidente');
+
+      if (hasIncidentColumn) {
+        return jsonData;
+      }
+
+      if (jsonData.length > bestSheetData.length) {
+        bestSheetData = jsonData;
+      }
+    }
+
+    return bestSheetData;
+  }
+
+  /**
    * Procesa los datos crudos y los convierte a incidentes
    */
   private processData(data: any[]): FileProcessResult {
@@ -175,9 +190,14 @@ export class FileParserService {
     let skippedRows = 0;
 
     data.forEach((row, index) => {
+      if (this.isSummaryRow(row)) {
+        // Fila de totales/pie de tabla (p.ej. "Count all"): no es un incidente, se omite en silencio
+        return;
+      }
+
       try {
         const incident = this.mapToIncident(row, index);
-        
+
         if (incident) {
           incidents.push(incident);
         } else {
@@ -295,7 +315,13 @@ export class FileParserService {
       
       // Columnas AS-AT: Corrección y causa
       fixedBy: this.getStringValue(row, ['Corregido Por', 'Fixed By']),
-      causedBy: this.getStringValue(row, ['Causado Por', 'Caused By'])
+      causedBy: this.getStringValue(row, ['Causado Por', 'Caused By']),
+
+      // Columnas AU-AX: Análisis de causa raíz (nuevo formato de sábana)
+      posseRaizal: this.getBooleanValue(row, ['Posse Raizal']),
+      raizalId: this.getStringValue(row, ['ID Raizal']),
+      rootCause: this.getStringValue(row, ['Causa Raíz', 'Causa Raiz', 'Root Cause']),
+      incidentType: this.getStringValue(row, ['Tipo de Incidencia', 'Incident Type'])
     };
   }
 
@@ -352,13 +378,30 @@ export class FileParserService {
    */
   private findField(row: any, possibleNames: string[]): any {
     for (const name of possibleNames) {
-      // Búsqueda case-insensitive
-      const key = Object.keys(row).find(k => k.toLowerCase() === name.toLowerCase());
+      // Búsqueda case-insensitive, ignorando espacios sobrantes en el encabezado
+      const key = Object.keys(row).find(k => k.trim().toLowerCase() === name.toLowerCase());
       if (key && row[key]) {
         return row[key];
       }
     }
     return null;
+  }
+
+  /**
+   * Detecta filas de pie de tabla (totales/conteos agregados por Excel) que no son incidentes reales,
+   * p.ej. una fila final "Count all" generada por una tabla dinámica.
+   */
+  private isSummaryRow(row: any): boolean {
+    const incidentNumber = this.findField(row, ['No. Incidente', 'No Incidente', 'Incident Number', 'Numero Incidente']);
+    const status = this.findField(row, ['Estado', 'Status', 'State']);
+    const summary = this.findField(row, ['Resumen', 'Summary', 'Título', 'Title']);
+
+    if (status || summary) return false;
+
+    if (!incidentNumber) return true;
+
+    const normalized = String(incidentNumber).toLowerCase().trim();
+    return /^(count|total|suma|grand total)/.test(normalized);
   }
 
   /**
@@ -375,7 +418,7 @@ export class FileParserService {
     if (normalized.includes('resuelto') || normalized.includes('resolved')) {
       return IncidentStatus.RESOLVED;
     }
-    if (normalized.includes('proceso') || normalized.includes('progress') || normalized.includes('asignado')) {
+    if (normalized.includes('proceso') || normalized.includes('progress') || normalized.includes('asignado') || normalized.includes('curso')) {
       return IncidentStatus.IN_PROGRESS;
     }
     if (normalized.includes('pendiente') || normalized.includes('pending') || normalized.includes('espera')) {
@@ -486,11 +529,9 @@ export class FileParserService {
    * Convierte fecha serial de Excel a Date de JavaScript
    */
   private excelDateToJSDate(serial: number): Date {
-    const utc_days = Math.floor(serial - 25569);
-    const utc_value = utc_days * 86400;
-    const date_info = new Date(utc_value * 1000);
-    // Usar Date.UTC para evitar problemas de timezone
-    return new Date(Date.UTC(date_info.getUTCFullYear(), date_info.getUTCMonth(), date_info.getUTCDate()));
+    // Conserva la hora/minuto (no solo el día) para poder calcular horas hábiles con precisión
+    const totalSeconds = Math.round((serial - 25569) * 86400);
+    return new Date(totalSeconds * 1000);
   }
 
   /**

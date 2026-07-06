@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IncidentService } from '../../../core/services/incident.service';
 import { ExportService } from '../../../core/services/export.service';
 import { Incident } from '../../../core/models/incident.model';
+import { buildIncidentsTsv } from '../../../core/utils/clipboard-table.util';
 
 @Component({
   selector: 'app-main-queues',
@@ -39,8 +40,15 @@ export class MainQueuesComponent implements OnInit {
   }
 
   copyAllIncidents(): void {
-    const incidentNumbers = this.mainQueuesIncidents.map(i => i.incidentNumber).join(', ');
-    this.copyToClipboard(incidentNumbers, `${this.mainQueuesIncidents.length} números de incidente copiados`);
+    const tsv = buildIncidentsTsv(this.mainQueuesIncidents.map(i => ({
+      'No. Incidente': i.incidentNumber,
+      'External Ticket': i.externalTicket || 'Sin External Ticket',
+      'Fecha Apertura': this.formatDate(i.openDate),
+      'Bandeja': i.assignedGroup || '-',
+      'Analista': i.assignedAnalyst || '-',
+      'Prioridad': i.priority
+    })));
+    this.copyToClipboard(tsv, `${this.mainQueuesIncidents.length} incidentes copiados`);
   }
 
   exportToExcel(): void {

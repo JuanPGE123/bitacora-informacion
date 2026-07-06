@@ -1,0 +1,117 @@
+<div class="analytics-container">
+  <div class="analytics-header-modern">
+    <div class="header-top">
+      <div class="header-title">
+        <h1>🕒 SLA y ANS Resueltos</h1>
+        <p class="subtitle">Cumplimiento de ANS en horas hábiles de Colombia (7:30am–5:00pm, Lun-Vie, sin festivos)</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-copy" (click)="copyToClipboardTable()" [disabled]="filteredRows.length === 0">📋 Copiar</button>
+        <button class="btn-export-excel" (click)="exportToExcel()" [disabled]="filteredRows.length === 0">📥 Excel</button>
+      </div>
+    </div>
+
+    <div class="metrics-dashboard">
+      <div class="metric-card metric-external">
+        <div class="metric-icon">📋</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ totalCount }}</div>
+          <div class="metric-label">Total Resueltos</div>
+        </div>
+      </div>
+      <div class="metric-card metric-external">
+        <div class="metric-icon">🟢</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ meetsCount }}</div>
+          <div class="metric-label">Cumplen ANS</div>
+        </div>
+      </div>
+      <div class="metric-card metric-risk">
+        <div class="metric-icon">🔴</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ missesCount }}</div>
+          <div class="metric-label">No Cumplen ANS</div>
+        </div>
+      </div>
+      <div class="metric-card metric-external">
+        <div class="metric-icon">📈</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ compliancePercentage }}%</div>
+          <div class="metric-label">% Cumplimiento</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="copy-message" *ngIf="copiedMessage">✅ {{ copiedMessage }}</div>
+
+  <div class="section-card">
+    <div class="filters-section">
+      <input
+        type="text"
+        class="search-input"
+        placeholder="Buscar por No. incidente o analista..."
+        [(ngModel)]="searchText"
+        (ngModelChange)="applyFilters()">
+
+      <select class="filter-select" [(ngModel)]="selectedPriority" (ngModelChange)="applyFilters()">
+        <option value="">Todas las prioridades</option>
+        <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
+      </select>
+
+      <select class="filter-select" [(ngModel)]="selectedAnalyst" (ngModelChange)="applyFilters()">
+        <option value="">Todos los analistas</option>
+        <option *ngFor="let analyst of analysts" [value]="analyst">{{ analyst }}</option>
+      </select>
+
+      <select class="filter-select" [(ngModel)]="selectedStatus" (ngModelChange)="applyFilters()">
+        <option value="">Cumple e incumple</option>
+        <option value="cumple">Solo cumple ANS</option>
+        <option value="incumple">Solo incumple ANS</option>
+      </select>
+
+      <button class="btn-clear-filters" (click)="clearFilters()" *ngIf="searchText || selectedPriority || selectedAnalyst || selectedStatus">
+        Limpiar Filtros
+      </button>
+    </div>
+
+    <div class="incidents-table-wrapper">
+      <table class="incidents-table">
+        <thead>
+          <tr>
+            <th>No. Incidente</th>
+            <th>Analista</th>
+            <th>Prioridad</th>
+            <th>Fecha Apertura</th>
+            <th>Fecha Solución</th>
+            <th>Horas Hábiles Transcurridas</th>
+            <th>Cumplió ANS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of filteredRows">
+            <td class="incident-number-cell">{{ row.incident.incidentNumber }}</td>
+            <td>{{ row.incident.assignedAnalyst || 'Sin Asignar' }}</td>
+            <td>
+              <span class="priority-badge" [ngClass]="'priority-' + row.incident.priority.toLowerCase()">
+                {{ row.incident.priority }}
+              </span>
+            </td>
+            <td>{{ formatDate(row.incident.openDate) }}</td>
+            <td>{{ formatDate(row.incident.solutionDate!) }}</td>
+            <td>{{ row.elapsedBusinessHours.toFixed(2) }}h ({{ formatDuration(row.elapsedBusinessHours) }})</td>
+            <td>
+              <span class="badge" [ngClass]="row.meetsSlaComputed ? 'badge-success' : 'badge-danger'">
+                {{ row.meetsSlaComputed ? '🟢 Sí' : '🔴 No' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="filteredRows.length === 0">
+        <p>No hay incidentes resueltos que coincidan con los filtros</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -22,6 +22,17 @@ export class ExportService {
   }
 
   /**
+   * Exporta filas ya armadas por el caller (columnas/encabezados custom)
+   */
+  exportRowsToExcel(rows: Record<string, any>[], filename: string = 'export'): void {
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Datos');
+
+    XLSX.writeFile(wb, `${filename}_${this.getTimestamp()}.xlsx`);
+  }
+
+  /**
    * Exporta incidentes a CSV
    */
   exportToCSV(incidents: Incident[], filename: string = 'incidentes'): void {

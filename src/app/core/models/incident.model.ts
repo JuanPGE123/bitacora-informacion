@@ -73,6 +73,12 @@ export interface Incident {
   // Columnas AS-AT: Corrección y causa
   fixedBy?: string;                          // AS: Corregido Por
   causedBy?: string;                         // AT: Causado Por
+
+  // Columnas AU-AX: Análisis de causa raíz (nuevo formato de sábana)
+  posseRaizal?: boolean;                     // AU: Posse Raizal
+  raizalId?: string;                         // AV: ID Raizal
+  rootCause?: string;                        // AW: Causa Raíz
+  incidentType?: string;                     // AX: Tipo de Incidencia
 }
 
 /**

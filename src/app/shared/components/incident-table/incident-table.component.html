@@ -23,18 +23,18 @@
 
     <select
       class="filter-select"
-      [(ngModel)]="selectedAnalyst"
-      (ngModelChange)="applyFilters()">
-      <option value="">Todos los analistas</option>
-      <option *ngFor="let analyst of analysts" [value]="analyst">{{ analyst }}</option>
-    </select>
-
-    <select
-      class="filter-select"
       [(ngModel)]="selectedPriority"
       (ngModelChange)="applyFilters()">
       <option value="">Todas las prioridades</option>
       <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
+    </select>
+
+    <select
+      class="filter-select"
+      [(ngModel)]="selectedAnalyst"
+      (ngModelChange)="applyFilters()">
+      <option value="">Todos los analistas</option>
+      <option *ngFor="let analyst of analysts" [value]="analyst">{{ analyst }}</option>
     </select>
 
     <select

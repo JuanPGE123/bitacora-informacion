@@ -6,6 +6,7 @@ import { IncidentService } from '../../../core/services/incident.service';
 import { KpiService } from '../../../core/services/kpi.service';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { Incident, IncidentPriority } from '../../../core/models/incident.model';
+import { buildIncidentsTsv } from '../../../core/utils/clipboard-table.util';
 import * as XLSX from 'xlsx';
 
 // Registrar componentes de Chart.js
@@ -504,8 +505,13 @@ export class ResolvedIncidentsAnalyticsComponent implements OnInit, AfterViewIni
   }
 
   copyTicketGroupIncidents(group: ExternalTicketGroup): void {
-    const incidentNumbers = group.incidents.map(i => i.incidentNumber).join(', ');
-    this.copyToClipboard(incidentNumbers, `${group.count} números de incidente copiados`);
+    const tsv = buildIncidentsTsv(group.incidents.map(i => ({
+      'No. Incidente': i.incidentNumber,
+      'Fecha Resolución': i.solutionDate ? this.formatDate(i.solutionDate) : '-',
+      'Analista': i.assignedAnalyst || 'Sin Asignar',
+      'Prioridad': i.priority
+    })));
+    this.copyToClipboard(tsv, `${group.count} incidentes copiados`);
   }
 
   exportTicketGroupsToExcel(): void {
