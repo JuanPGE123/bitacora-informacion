@@ -91,7 +91,7 @@
                 {{ row.incident.priority }}
               </span>
             </td>
-            <td>{{ formatDate(row.incident.openDate) }}</td>
+            <td>{{ formatDateTime(row.incident.openDate) }}</td>
             <td>{{ row.elapsedBusinessHours.toFixed(2) }}h</td>
             <td>
               <span class="badge" [ngClass]="row.isOverdue ? 'badge-danger' : 'badge-success'">

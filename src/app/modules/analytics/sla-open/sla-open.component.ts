@@ -137,6 +137,14 @@ export class SlaOpenComponent implements OnInit, OnDestroy {
     return `${day}/${month}/${year}`;
   }
 
+  formatDateTime(date: Date): string {
+    if (!date) return '-';
+    const d = new Date(date);
+    const hours = String(d.getUTCHours()).padStart(2, '0');
+    const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+    return `${this.formatDate(d)} ${hours}:${minutes}`;
+  }
+
   formatDuration(hours: number): string {
     return formatHoursDuration(hours);
   }
@@ -146,7 +154,7 @@ export class SlaOpenComponent implements OnInit, OnDestroy {
       'No. Incidente': r.incident.incidentNumber,
       'Analista': r.incident.assignedAnalyst || 'Sin Asignar',
       'Prioridad': r.incident.priority,
-      'Fecha Apertura': this.formatDate(r.incident.openDate),
+      'Fecha Apertura': this.formatDateTime(r.incident.openDate),
       'Horas Hábiles Transcurridas': r.elapsedBusinessHours.toFixed(2),
       'Estado': r.isOverdue ? 'Vencido' : 'A tiempo',
       'Tiempo Restante/Vencido': (r.isOverdue ? 'Vencido hace ' : 'Faltan ') + this.formatDuration(r.remainingHours)
