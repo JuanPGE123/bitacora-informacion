@@ -1,4 +1,4 @@
-import { IncidentPriority } from '../models/incident.model';
+import { Incident, IncidentPriority } from '../models/incident.model';
 import { isColombiaHoliday } from './colombia-holidays.util';
 
 const BUSINESS_START_HOUR = 7;
@@ -54,6 +54,34 @@ export function businessHoursBetween(start: Date, end: Date): number {
   }
 
   return total;
+}
+
+export interface IncidentSlaEvaluation {
+  elapsedBusinessHours: number;
+  thresholdHours: number;
+  remainingHours: number;
+  meetsSla: boolean;
+  isResolved: boolean;
+}
+
+/**
+ * Evalúa el cumplimiento de ANS de un incidente en horas hábiles de Colombia.
+ * Si el incidente ya tiene solutionDate, mide contra esa fecha (cumple/no cumple);
+ * si sigue abierto, mide contra "now" (a tiempo/vencido).
+ */
+export function evaluateIncidentSla(incident: Incident, now: Date): IncidentSlaEvaluation {
+  const isResolved = !!incident.solutionDate;
+  const end = isResolved ? incident.solutionDate! : now;
+  const elapsedBusinessHours = businessHoursBetween(incident.openDate, end);
+  const thresholdHours = SLA_HOURS_BY_PRIORITY[incident.priority] ?? SLA_HOURS_BY_PRIORITY[IncidentPriority.MEDIUM];
+  const remainingHours = thresholdHours - elapsedBusinessHours;
+  return {
+    elapsedBusinessHours,
+    thresholdHours,
+    remainingHours,
+    meetsSla: remainingHours > 0,
+    isResolved
+  };
 }
 
 /** Formatea horas decimales como "Xd Yh Zm" / "Yh Zm" / "Zm" */

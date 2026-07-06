@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Incident, IncidentPriority, IncidentStatus } from '../../../core/models/incident.model';
 import { SortOptions, PaginationOptions } from '../../../core/models/table.model';
+import { evaluateIncidentSla, nowInBogota } from '../../../core/utils/business-hours.util';
 
 @Component({
   selector: 'app-incident-table',
@@ -42,12 +43,16 @@ export class IncidentTableComponent implements OnInit, OnChanges {
     pageSizeOptions: [10, 25, 50, 100]
   };
 
+  private slaNow: Date = nowInBogota();
+
   ngOnInit(): void {
+    this.slaNow = nowInBogota();
     this.initializeFilters();
     this.applyFilters();
   }
 
   ngOnChanges(): void {
+    this.slaNow = nowInBogota();
     this.initializeFilters();
     this.applyFilters();
   }
@@ -117,6 +122,8 @@ export class IncidentTableComponent implements OnInit, OnChanges {
       case 'solutionDate':
       case 'resolvedDate':
         return incident.solutionDate ? new Date(incident.solutionDate).getTime() : 0;
+      case 'slaStatus':
+        return evaluateIncidentSla(incident, this.slaNow).remainingHours;
       default:
         return (incident as any)[field];
     }
@@ -207,5 +214,17 @@ export class IncidentTableComponent implements OnInit, OnChanges {
 
   getStatusClass(status: IncidentStatus): string {
     return `status-${status.toLowerCase().replace(' ', '-')}`;
+  }
+
+  getSlaLabel(incident: Incident): string {
+    const evaluation = evaluateIncidentSla(incident, this.slaNow);
+    if (evaluation.isResolved) {
+      return evaluation.meetsSla ? '🟢 Cumple ANS' : '🔴 No cumple ANS';
+    }
+    return evaluation.meetsSla ? '🟢 A tiempo' : '🔴 Vencido';
+  }
+
+  getSlaClass(incident: Incident): string {
+    return evaluateIncidentSla(incident, this.slaNow).meetsSla ? 'badge-success' : 'badge-danger';
   }
 }

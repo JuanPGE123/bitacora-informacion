@@ -147,6 +147,16 @@
   }
 }
 
+.badge-success {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+}
+
+.badge-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
 .priority-badge {
   display: inline-block;
   padding: 0.25rem 0.75rem;

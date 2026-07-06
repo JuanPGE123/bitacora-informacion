@@ -73,13 +73,34 @@
       <table class="incidents-table">
         <thead>
           <tr>
-            <th>No. Incidente</th>
-            <th>Analista</th>
-            <th>Prioridad</th>
-            <th>Fecha Apertura</th>
-            <th>Horas Hábiles Transcurridas</th>
-            <th>Estado</th>
-            <th>Tiempo Restante / Vencido</th>
+            <th (click)="sortBy('incidentNumber')" class="sortable">
+              No. Incidente
+              <span class="sort-icon" *ngIf="sortField === 'incidentNumber'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th (click)="sortBy('analyst')" class="sortable">
+              Analista
+              <span class="sort-icon" *ngIf="sortField === 'analyst'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th (click)="sortBy('priority')" class="sortable">
+              Prioridad
+              <span class="sort-icon" *ngIf="sortField === 'priority'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th (click)="sortBy('openDate')" class="sortable">
+              Fecha Apertura
+              <span class="sort-icon" *ngIf="sortField === 'openDate'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th (click)="sortBy('elapsedBusinessHours')" class="sortable">
+              Horas Hábiles Transcurridas
+              <span class="sort-icon" *ngIf="sortField === 'elapsedBusinessHours'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th (click)="sortBy('status')" class="sortable">
+              Estado
+              <span class="sort-icon" *ngIf="sortField === 'status'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th (click)="sortBy('remainingHours')" class="sortable">
+              Tiempo Restante / Vencido
+              <span class="sort-icon" *ngIf="sortField === 'remainingHours'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
           </tr>
         </thead>
         <tbody>

@@ -85,6 +85,12 @@
               {{ sortOptions.direction === 'asc' ? '↑' : '↓' }}
             </span>
           </th>
+          <th (click)="sortBy('slaStatus')" class="sortable">
+            Estado SLA
+            <span class="sort-icon" *ngIf="sortOptions.field === 'slaStatus'">
+              {{ sortOptions.direction === 'asc' ? '↑' : '↓' }}
+            </span>
+          </th>
           <th (click)="sortBy('createdDate')" class="sortable">
             Fecha Apertura
             <span class="sort-icon" *ngIf="sortOptions.field === 'createdDate'">
@@ -112,6 +118,11 @@
           <td>
             <span class="badge" [ngClass]="getStatusClass(incident.status)">
               {{ incident.status }}
+            </span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="getSlaClass(incident)">
+              {{ getSlaLabel(incident) }}
             </span>
           </td>
           <td>{{ formatDate(incident.openDate) }}</td>

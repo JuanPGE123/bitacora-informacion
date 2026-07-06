@@ -45,6 +45,7 @@
               <th>External Ticket</th>
               <th>Fecha Apertura</th>
               <th>Prioridad</th>
+              <th>Estado SLA</th>
             </tr>
           </thead>
           <tbody>
@@ -55,6 +56,11 @@
               <td>
                 <span class="priority-badge" [class]="'priority-' + incident.priority.toLowerCase()">
                   {{ incident.priority }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getSlaClass(incident)">
+                  {{ getSlaLabel(incident) }}
                 </span>
               </td>
             </tr>

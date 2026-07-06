@@ -4,6 +4,7 @@ import { IncidentService } from '../../../core/services/incident.service';
 import { ExportService } from '../../../core/services/export.service';
 import { Incident } from '../../../core/models/incident.model';
 import { buildIncidentsTsv } from '../../../core/utils/clipboard-table.util';
+import { evaluateIncidentSla, nowInBogota } from '../../../core/utils/business-hours.util';
 
 @Component({
   selector: 'app-main-queues',
@@ -20,6 +21,7 @@ export class MainQueuesComponent implements OnInit {
   ];
   mainQueuesIncidents: Incident[] = [];
   copiedMessage: string = '';
+  private slaNow: Date = nowInBogota();
 
   constructor(
     private incidentService: IncidentService,
@@ -32,6 +34,7 @@ export class MainQueuesComponent implements OnInit {
 
   loadMainQueuesData(): void {
     this.incidentService.getOpenIncidentsObservable().subscribe(incidents => {
+      this.slaNow = nowInBogota();
       this.mainQueuesIncidents = incidents.filter(incident => {
         const group = incident.assignedGroup || '';
         return this.mainQueueNames.some(queueName => group.includes(queueName));
@@ -46,7 +49,8 @@ export class MainQueuesComponent implements OnInit {
       'Fecha Apertura': this.formatDate(i.openDate),
       'Bandeja': i.assignedGroup || '-',
       'Analista': i.assignedAnalyst || '-',
-      'Prioridad': i.priority
+      'Prioridad': i.priority,
+      'Estado SLA': this.getSlaLabel(i)
     })));
     this.copyToClipboard(tsv, `${this.mainQueuesIncidents.length} incidentes copiados`);
   }
@@ -62,6 +66,14 @@ export class MainQueuesComponent implements OnInit {
     const month = String(d.getUTCMonth() + 1).padStart(2, '0');
     const year = d.getUTCFullYear();
     return `${day}/${month}/${year}`;
+  }
+
+  getSlaLabel(incident: Incident): string {
+    return evaluateIncidentSla(incident, this.slaNow).meetsSla ? '🟢 A tiempo' : '🔴 Vencido';
+  }
+
+  getSlaClass(incident: Incident): string {
+    return evaluateIncidentSla(incident, this.slaNow).meetsSla ? 'badge-success' : 'badge-danger';
   }
 
   private copyToClipboard(text: string, message: string): void {

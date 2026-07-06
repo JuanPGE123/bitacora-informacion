@@ -79,13 +79,34 @@
       <table class="incidents-table">
         <thead>
           <tr>
-            <th>No. Incidente</th>
-            <th>Analista</th>
-            <th>Prioridad</th>
-            <th>Fecha Apertura</th>
-            <th>Fecha Solución</th>
-            <th>Horas Hábiles Transcurridas</th>
-            <th>Cumplió ANS</th>
+            <th (click)="sortBy('incidentNumber')" class="sortable">
+              No. Incidente
+              <span class="sort-icon" *ngIf="sortField === 'incidentNumber'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th (click)="sortBy('analyst')" class="sortable">
+              Analista
+              <span class="sort-icon" *ngIf="sortField === 'analyst'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th (click)="sortBy('priority')" class="sortable">
+              Prioridad
+              <span class="sort-icon" *ngIf="sortField === 'priority'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th (click)="sortBy('openDate')" class="sortable">
+              Fecha Apertura
+              <span class="sort-icon" *ngIf="sortField === 'openDate'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th (click)="sortBy('solutionDate')" class="sortable">
+              Fecha Solución
+              <span class="sort-icon" *ngIf="sortField === 'solutionDate'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th (click)="sortBy('elapsedBusinessHours')" class="sortable">
+              Horas Hábiles Transcurridas
+              <span class="sort-icon" *ngIf="sortField === 'elapsedBusinessHours'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
+            <th (click)="sortBy('meetsSla')" class="sortable">
+              Cumplió ANS
+              <span class="sort-icon" *ngIf="sortField === 'meetsSla'">{{ sortDirection === 'asc' ? '↑' : '↓' }}</span>
+            </th>
           </tr>
         </thead>
         <tbody>

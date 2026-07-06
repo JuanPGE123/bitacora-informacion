@@ -156,6 +156,7 @@
                 <th style="padding: 0.75rem; font-weight: 600; color: #475569; border-bottom: 2px solid #cbd5e1;">Fecha Resolución</th>
                 <th style="padding: 0.75rem; font-weight: 600; color: #475569; border-bottom: 2px solid #cbd5e1;">Analista</th>
                 <th style="padding: 0.75rem; font-weight: 600; color: #475569; border-bottom: 2px solid #cbd5e1;">Prioridad</th>
+                <th style="padding: 0.75rem; font-weight: 600; color: #475569; border-bottom: 2px solid #cbd5e1;">Cumplió ANS</th>
               </tr>
             </thead>
             <tbody>
@@ -164,9 +165,15 @@
                 <td style="padding: 0.75rem; color: #64748b;">{{ formatDate(incident.solutionDate!) }}</td>
                 <td style="padding: 0.75rem; color: #1e293b;">{{ incident.assignedAnalyst || 'Sin Asignar' }}</td>
                 <td style="padding: 0.75rem;">
-                  <span class="priority-badge" [ngClass]="'priority-' + incident.priority.toLowerCase()" 
+                  <span class="priority-badge" [ngClass]="'priority-' + incident.priority.toLowerCase()"
                     style="padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500;">
                     {{ incident.priority }}
+                  </span>
+                </td>
+                <td style="padding: 0.75rem;">
+                  <span class="badge" [ngClass]="getSlaClass(incident)"
+                    style="padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.875rem; font-weight: 500;">
+                    {{ getSlaLabel(incident) }}
                   </span>
                 </td>
               </tr>

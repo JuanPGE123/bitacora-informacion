@@ -61,6 +61,7 @@
                   <th>Fecha Apertura</th>
                   <th>Fecha Solución</th>
                   <th>Prioridad</th>
+                  <th>Cumplió ANS</th>
                 </tr>
               </thead>
               <tbody>
@@ -72,6 +73,11 @@
                   <td>
                     <span class="priority-badge" [class]="'priority-' + incident.priority.toLowerCase()">
                       {{ incident.priority }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="getSlaClass(incident)">
+                      {{ getSlaLabel(incident) }}
                     </span>
                   </td>
                 </tr>

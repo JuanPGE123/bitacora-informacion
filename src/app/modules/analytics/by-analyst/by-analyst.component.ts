@@ -6,6 +6,7 @@ import { NotionService, AnalystNotionData } from '../../../core/services/notion.
 import { ExportService } from '../../../core/services/export.service';
 import { Incident, IncidentPriority } from '../../../core/models/incident.model';
 import { buildIncidentsTsv } from '../../../core/utils/clipboard-table.util';
+import { evaluateIncidentSla, nowInBogota } from '../../../core/utils/business-hours.util';
 
 interface AnalystGroup {
   analyst: string;
@@ -25,6 +26,7 @@ export class ByAnalystComponent implements OnInit {
   analystGroups: AnalystGroup[] = [];
   copiedMessage: string = '';
   isSyncingNotion: boolean = false;
+  private slaNow: Date = nowInBogota();
 
   constructor(
     private incidentService: IncidentService,
@@ -38,6 +40,7 @@ export class ByAnalystComponent implements OnInit {
 
   loadAnalystGroups(): void {
     this.incidentService.getOpenIncidentsObservable().subscribe(incidents => {
+      this.slaNow = nowInBogota();
       const groups = new Map<string, Incident[]>();
       
       incidents.forEach(incident => {
@@ -70,7 +73,8 @@ export class ByAnalystComponent implements OnInit {
       'No. Incidente': i.incidentNumber,
       'External Ticket': i.externalTicket || 'Sin External Ticket',
       'Fecha Apertura': this.formatDate(i.openDate),
-      'Prioridad': i.priority
+      'Prioridad': i.priority,
+      'Estado SLA': this.getSlaLabel(i)
     })));
     this.copyToClipboard(tsv, `${group.count} incidentes copiados`);
   }
@@ -135,6 +139,14 @@ export class ByAnalystComponent implements OnInit {
     const month = String(d.getUTCMonth() + 1).padStart(2, '0');
     const year = d.getUTCFullYear();
     return `${day}/${month}/${year}`;
+  }
+
+  getSlaLabel(incident: Incident): string {
+    return evaluateIncidentSla(incident, this.slaNow).meetsSla ? '🟢 A tiempo' : '🔴 Vencido';
+  }
+
+  getSlaClass(incident: Incident): string {
+    return evaluateIncidentSla(incident, this.slaNow).meetsSla ? 'badge-success' : 'badge-danger';
   }
 
   private copyToClipboard(text: string, message: string): void {

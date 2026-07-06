@@ -33,6 +33,9 @@ export class SlaResolvedComponent implements OnInit {
   selectedAnalyst: string = '';
   selectedStatus: string = '';
 
+  sortField: string = 'solutionDate';
+  sortDirection: 'asc' | 'desc' = 'desc';
+
   totalCount = 0;
   meetsCount = 0;
   missesCount = 0;
@@ -99,9 +102,36 @@ export class SlaResolvedComponent implements OnInit {
       filtered = filtered.filter(r => !r.meetsSlaComputed);
     }
 
-    this.filteredRows = filtered.sort((a, b) =>
-      new Date(b.incident.solutionDate!).getTime() - new Date(a.incident.solutionDate!).getTime()
-    );
+    this.filteredRows = filtered.sort((a, b) => {
+      const av = this.getSortValue(a, this.sortField);
+      const bv = this.getSortValue(b, this.sortField);
+      if (av < bv) return this.sortDirection === 'asc' ? -1 : 1;
+      if (av > bv) return this.sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  sortBy(field: string): void {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.applyFilters();
+  }
+
+  private getSortValue(row: SlaResolvedRow, field: string): number | string {
+    switch (field) {
+      case 'incidentNumber': return row.incident.incidentNumber || '';
+      case 'analyst': return row.incident.assignedAnalyst || '';
+      case 'priority': return row.incident.priority || '';
+      case 'openDate': return new Date(row.incident.openDate).getTime();
+      case 'solutionDate': return new Date(row.incident.solutionDate!).getTime();
+      case 'elapsedBusinessHours': return row.elapsedBusinessHours;
+      case 'meetsSla': return row.meetsSlaComputed ? 1 : 0;
+      default: return '';
+    }
   }
 
   clearFilters(): void {

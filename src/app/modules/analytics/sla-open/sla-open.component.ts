@@ -36,6 +36,9 @@ export class SlaOpenComponent implements OnInit, OnDestroy {
   selectedAnalyst: string = '';
   selectedStatus: string = '';
 
+  sortField: string = 'remainingHours';
+  sortDirection: 'asc' | 'desc' = 'asc';
+
   totalCount = 0;
   overdueCount = 0;
   onTimeCount = 0;
@@ -117,7 +120,36 @@ export class SlaOpenComponent implements OnInit, OnDestroy {
       filtered = filtered.filter(r => !r.isOverdue);
     }
 
-    this.filteredRows = filtered.sort((a, b) => a.remainingHours - b.remainingHours);
+    this.filteredRows = filtered.sort((a, b) => {
+      const av = this.getSortValue(a, this.sortField);
+      const bv = this.getSortValue(b, this.sortField);
+      if (av < bv) return this.sortDirection === 'asc' ? -1 : 1;
+      if (av > bv) return this.sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  sortBy(field: string): void {
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.applyFilters();
+  }
+
+  private getSortValue(row: SlaOpenRow, field: string): number | string {
+    switch (field) {
+      case 'incidentNumber': return row.incident.incidentNumber || '';
+      case 'analyst': return row.incident.assignedAnalyst || '';
+      case 'priority': return row.incident.priority || '';
+      case 'openDate': return new Date(row.incident.openDate).getTime();
+      case 'elapsedBusinessHours': return row.elapsedBusinessHours;
+      case 'status': return row.isOverdue ? 1 : 0;
+      case 'remainingHours': return row.remainingHours;
+      default: return '';
+    }
   }
 
   clearFilters(): void {

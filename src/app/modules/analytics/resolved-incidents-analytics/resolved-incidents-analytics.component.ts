@@ -7,6 +7,7 @@ import { KpiService } from '../../../core/services/kpi.service';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { Incident, IncidentPriority } from '../../../core/models/incident.model';
 import { buildIncidentsTsv } from '../../../core/utils/clipboard-table.util';
+import { evaluateIncidentSla, nowInBogota } from '../../../core/utils/business-hours.util';
 import * as XLSX from 'xlsx';
 
 // Registrar componentes de Chart.js
@@ -52,6 +53,7 @@ export class ResolvedIncidentsAnalyticsComponent implements OnInit, AfterViewIni
   
   // Mensaje de copiado
   copiedMessage: string = '';
+  private slaNow: Date = nowInBogota();
 
   constructor(
     private analyticsService: AnalyticsService,
@@ -71,6 +73,7 @@ export class ResolvedIncidentsAnalyticsComponent implements OnInit, AfterViewIni
 
   loadKPIs(): void {
     this.incidentService.getResolvedIncidentsObservable().subscribe(incidents => {
+      this.slaNow = nowInBogota();
       this.totalResolved = incidents.length;
       this.averageResolutionTime = this.calculateAverageResolutionTime(incidents);
       this.slaCompliance = this.calculateSLACompliance(incidents);
@@ -509,7 +512,8 @@ export class ResolvedIncidentsAnalyticsComponent implements OnInit, AfterViewIni
       'No. Incidente': i.incidentNumber,
       'Fecha Resolución': i.solutionDate ? this.formatDate(i.solutionDate) : '-',
       'Analista': i.assignedAnalyst || 'Sin Asignar',
-      'Prioridad': i.priority
+      'Prioridad': i.priority,
+      'Cumplió ANS': this.getSlaLabel(i)
     })));
     this.copyToClipboard(tsv, `${group.count} incidentes copiados`);
   }
@@ -546,6 +550,14 @@ export class ResolvedIncidentsAnalyticsComponent implements OnInit, AfterViewIni
     const month = String(d.getUTCMonth() + 1).padStart(2, '0');
     const year = d.getUTCFullYear();
     return `${day}/${month}/${year}`;
+  }
+
+  getSlaLabel(incident: Incident): string {
+    return evaluateIncidentSla(incident, this.slaNow).meetsSla ? '🟢 Cumple ANS' : '🔴 No cumple ANS';
+  }
+
+  getSlaClass(incident: Incident): string {
+    return evaluateIncidentSla(incident, this.slaNow).meetsSla ? 'badge-success' : 'badge-danger';
   }
 
   private copyToClipboard(text: string, message: string): void {
