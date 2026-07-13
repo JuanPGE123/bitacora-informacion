@@ -162,6 +162,24 @@ export interface AnalystStats {
 }
 
 /**
+ * Datos agregados por grupo asignado
+ */
+export interface GroupStats {
+  group: string;
+  totalIncidents: number;
+  openIncidents: number;
+  resolvedIncidents: number;
+}
+
+/**
+ * Cumplimiento de OLA/ANS entre incidentes resueltos
+ */
+export interface SlaComplianceStats {
+  onTime: number;
+  overdue: number;
+}
+
+/**
  * Distribución por prioridad
  */
 export interface PriorityDistribution {

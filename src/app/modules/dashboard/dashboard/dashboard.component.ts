@@ -2,22 +2,34 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
 import { KpiService } from '../../../core/services/kpi.service';
+import { AnalyticsService } from '../../../core/services/analytics.service';
 import { DashboardKPI } from '../../../core/models/incident.model';
+import { ChartConfig } from '../../../core/models/chart.model';
+import { ChartComponent } from '../../../shared/components/chart/chart.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ChartComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
   kpis$!: Observable<DashboardKPI>;
+  groupChart$!: Observable<ChartConfig>;
+  workloadChart$!: Observable<ChartConfig>;
+  slaComplianceChart$!: Observable<ChartConfig>;
 
-  constructor(private kpiService: KpiService) {}
+  constructor(
+    private kpiService: KpiService,
+    private analyticsService: AnalyticsService
+  ) {}
 
   ngOnInit(): void {
     this.kpis$ = this.kpiService.getDashboardKPIs();
+    this.groupChart$ = this.analyticsService.getIncidentsByGroupChart();
+    this.workloadChart$ = this.analyticsService.getIncidentsByAnalystChart();
+    this.slaComplianceChart$ = this.analyticsService.getSlaComplianceChart();
   }
 
   /**

@@ -141,6 +141,19 @@
       </div>
     </div>
   </div>
+
+  <!-- Gráficos de Analítica -->
+  <div class="charts-grid" *ngIf="kpis.totalIncidents > 0">
+    <div class="chart-panel" *ngIf="groupChart$ | async as groupChart">
+      <app-chart [config]="groupChart"></app-chart>
+    </div>
+    <div class="chart-panel" *ngIf="workloadChart$ | async as workloadChart">
+      <app-chart [config]="workloadChart"></app-chart>
+    </div>
+    <div class="chart-panel" *ngIf="slaComplianceChart$ | async as slaComplianceChart">
+      <app-chart [config]="slaComplianceChart"></app-chart>
+    </div>
+  </div>
 </div>
 
 <!-- Empty State -->

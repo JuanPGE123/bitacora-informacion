@@ -5,21 +5,25 @@ import { ExportService } from '../../../core/services/export.service';
 import { Incident } from '../../../core/models/incident.model';
 import { buildIncidentsTsv } from '../../../core/utils/clipboard-table.util';
 import { evaluateIncidentSla, nowInBogota } from '../../../core/utils/business-hours.util';
+import { groupByGroupThenAnalyst, GroupNode } from '../../../core/utils/hierarchy.util';
+import { GroupAnalystTreeComponent } from '../../../shared/components/group-analyst-tree/group-analyst-tree.component';
 
 @Component({
   selector: 'app-main-queues',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, GroupAnalystTreeComponent],
   templateUrl: './main-queues.component.html',
   styleUrls: ['./main-queues.component.scss']
 })
 export class MainQueuesComponent implements OnInit {
+  /** Nombres exactos de bandeja considerados "principales" (comparación exacta, no substring) */
   mainQueueNames = [
     'Soporte Plataforma Automatización de Procesos',
     'Soporte Aus',
     'Soporte AVA'
   ];
   mainQueuesIncidents: Incident[] = [];
+  groups: GroupNode[] = [];
   copiedMessage: string = '';
   private slaNow: Date = nowInBogota();
 
@@ -35,10 +39,10 @@ export class MainQueuesComponent implements OnInit {
   loadMainQueuesData(): void {
     this.incidentService.getOpenIncidentsObservable().subscribe(incidents => {
       this.slaNow = nowInBogota();
-      this.mainQueuesIncidents = incidents.filter(incident => {
-        const group = incident.assignedGroup || '';
-        return this.mainQueueNames.some(queueName => group.includes(queueName));
-      });
+      this.mainQueuesIncidents = incidents.filter(incident =>
+        this.mainQueueNames.includes((incident.assignedGroup || '').trim())
+      );
+      this.groups = groupByGroupThenAnalyst(this.mainQueuesIncidents);
     });
   }
 

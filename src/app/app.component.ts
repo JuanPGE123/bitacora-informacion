@@ -72,13 +72,13 @@ export class AppComponent {
     {
       path: '/analytics/sla-open',
       icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-      label: 'SLA y ANS Abiertos',
+      label: 'OLA Abiertos',
       active: false
     },
     {
       path: '/analytics/sla-resolved',
       icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-      label: 'SLA y ANS Resueltos',
+      label: 'OLA Resueltos',
       active: false
     },
     {

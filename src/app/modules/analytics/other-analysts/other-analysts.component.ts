@@ -5,21 +5,25 @@ import { ExportService } from '../../../core/services/export.service';
 import { Incident } from '../../../core/models/incident.model';
 import { buildIncidentsTsv } from '../../../core/utils/clipboard-table.util';
 import { evaluateIncidentSla, nowInBogota } from '../../../core/utils/business-hours.util';
+import { groupByGroupThenAnalyst, GroupNode } from '../../../core/utils/hierarchy.util';
+import { GroupAnalystTreeComponent } from '../../../shared/components/group-analyst-tree/group-analyst-tree.component';
 
 @Component({
   selector: 'app-other-analysts',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, GroupAnalystTreeComponent],
   templateUrl: './other-analysts.component.html',
   styleUrls: ['./other-analysts.component.scss']
 })
 export class OtherAnalystsComponent implements OnInit {
+  /** Nombres exactos de bandeja "principales" a excluir (comparación exacta, no substring) */
   mainQueueNames = [
     'Soporte Plataforma Automatización de Procesos',
     'Soporte Aus',
     'Soporte AVA'
   ];
   otherAnalystsIncidents: Incident[] = [];
+  groups: GroupNode[] = [];
   copiedMessage: string = '';
   private slaNow: Date = nowInBogota();
 
@@ -35,10 +39,10 @@ export class OtherAnalystsComponent implements OnInit {
   loadOtherAnalystsData(): void {
     this.incidentService.getOpenIncidentsObservable().subscribe(incidents => {
       this.slaNow = nowInBogota();
-      this.otherAnalystsIncidents = incidents.filter(incident => {
-        const group = incident.assignedGroup || '';
-        return !this.mainQueueNames.some(queueName => group.includes(queueName));
-      });
+      this.otherAnalystsIncidents = incidents.filter(incident =>
+        !this.mainQueueNames.includes((incident.assignedGroup || '').trim())
+      );
+      this.groups = groupByGroupThenAnalyst(this.otherAnalystsIncidents);
     });
   }
 

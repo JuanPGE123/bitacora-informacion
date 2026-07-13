@@ -29,10 +29,12 @@ export class SlaOpenComponent implements OnInit, OnDestroy {
   filteredRows: SlaOpenRow[] = [];
 
   priorities: IncidentPriority[] = Object.values(IncidentPriority);
+  groups: string[] = [];
   analysts: string[] = [];
 
   searchText: string = '';
   selectedPriority: string = '';
+  selectedGroup: string = '';
   selectedAnalyst: string = '';
   selectedStatus: string = '';
 
@@ -85,9 +87,28 @@ export class SlaOpenComponent implements OnInit, OnDestroy {
     this.onTimeCount = this.totalCount - this.overdueCount;
     this.lastUpdated = now;
 
-    const uniqueAnalysts = new Set(incidents.map(i => i.assignedAnalyst).filter(a => a));
+    const uniqueGroups = new Set(incidents.map(i => i.assignedGroup).filter(g => g));
+    this.groups = Array.from(uniqueGroups).sort() as string[];
+    this.refreshAnalystOptions();
+
+    this.applyFilters();
+  }
+
+  /** Recalcula la lista de analistas disponible, restringida al grupo seleccionado (aislamiento) */
+  private refreshAnalystOptions(): void {
+    const scoped = this.selectedGroup
+      ? this.rows.filter(r => r.incident.assignedGroup === this.selectedGroup)
+      : this.rows;
+    const uniqueAnalysts = new Set(scoped.map(r => r.incident.assignedAnalyst).filter(a => a));
     this.analysts = Array.from(uniqueAnalysts).sort() as string[];
 
+    if (this.selectedAnalyst && !this.analysts.includes(this.selectedAnalyst)) {
+      this.selectedAnalyst = '';
+    }
+  }
+
+  onGroupChange(): void {
+    this.refreshAnalystOptions();
     this.applyFilters();
   }
 
@@ -108,6 +129,10 @@ export class SlaOpenComponent implements OnInit, OnDestroy {
 
     if (this.selectedPriority) {
       filtered = filtered.filter(r => r.incident.priority === this.selectedPriority);
+    }
+
+    if (this.selectedGroup) {
+      filtered = filtered.filter(r => r.incident.assignedGroup === this.selectedGroup);
     }
 
     if (this.selectedAnalyst) {
@@ -155,8 +180,10 @@ export class SlaOpenComponent implements OnInit, OnDestroy {
   clearFilters(): void {
     this.searchText = '';
     this.selectedPriority = '';
+    this.selectedGroup = '';
     this.selectedAnalyst = '';
     this.selectedStatus = '';
+    this.refreshAnalystOptions();
     this.applyFilters();
   }
 

@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { IncidentService } from './incident.service';
-import { 
-  DashboardKPI, 
-  AnalystStats, 
-  PriorityDistribution, 
+import {
+  DashboardKPI,
+  AnalystStats,
+  GroupStats,
+  SlaComplianceStats,
+  PriorityDistribution,
   CategoryDistribution,
   DailyTrend,
   Incident,
@@ -151,6 +153,55 @@ export class KpiService {
     });
 
     return stats.sort((a, b) => b.totalIncidents - a.totalIncidents);
+  }
+
+  /**
+   * Obtiene estadísticas de abiertos/resueltos por grupo asignado
+   */
+  getGroupStats(): Observable<GroupStats[]> {
+    return this.incidentService.getIncidents().pipe(
+      map(incidents => this.calculateGroupStats(incidents))
+    );
+  }
+
+  private calculateGroupStats(incidents: Incident[]): GroupStats[] {
+    const groups = new Set(incidents.map(i => i.assignedGroup).filter(g => g));
+    const stats: GroupStats[] = [];
+
+    groups.forEach(group => {
+      const groupIncidents = incidents.filter(i => i.assignedGroup === group);
+      const openIncidents = groupIncidents.filter(i =>
+        i.status === IncidentStatus.OPEN ||
+        i.status === IncidentStatus.IN_PROGRESS ||
+        i.status === IncidentStatus.PENDING
+      ).length;
+      const resolvedIncidents = groupIncidents.filter(i =>
+        i.status === IncidentStatus.RESOLVED ||
+        i.status === IncidentStatus.CLOSED
+      ).length;
+
+      stats.push({
+        group: group!,
+        totalIncidents: groupIncidents.length,
+        openIncidents,
+        resolvedIncidents
+      });
+    });
+
+    return stats.sort((a, b) => b.totalIncidents - a.totalIncidents);
+  }
+
+  /**
+   * Cumplimiento de OLA/ANS (a tiempo vs vencidos) entre incidentes resueltos
+   */
+  getSlaComplianceStats(): Observable<SlaComplianceStats> {
+    return this.incidentService.getResolvedIncidentsObservable().pipe(
+      map(incidents => {
+        const resolved = incidents.filter(i => i.solutionDate);
+        const onTime = resolved.filter(i => i.meetsSla === true).length;
+        return { onTime, overdue: resolved.length - onTime };
+      })
+    );
   }
 
   /**

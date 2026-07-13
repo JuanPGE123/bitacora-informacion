@@ -78,26 +78,38 @@
     </div>
 
     <div class="analyst-urgent-groups" *ngIf="urgentMeetsSLAExpanded">
-      <div class="analyst-group-card" *ngFor="let group of urgentMeetsSLAGroups">
-        <div class="group-header" (click)="toggleAnalystUrgentGroup(group)">
+      <div class="group-bucket-card" *ngFor="let bucket of urgentMeetsSLABuckets">
+        <div class="bucket-header" (click)="toggleUrgentBucket(bucket)">
           <div class="group-info">
-            <h3>👤 {{ group.analyst }}</h3>
-            <span class="badge badge-info">{{ group.count }} incidente{{ group.count !== 1 ? 's' : '' }}</span>
+            <h3>🗂️ {{ bucket.group }}</h3>
+            <span class="badge badge-info">{{ bucket.count }} incidente{{ bucket.count !== 1 ? 's' : '' }}</span>
           </div>
-          <div class="group-actions">
-            <button class="btn-copy-small" (click)="copyAnalystUrgentIncidents(group); $event.stopPropagation()">
-              📋 Copiar Lista
-            </button>
-            <span class="expand-icon">{{ group.expanded ? '▼' : '▶' }}</span>
-          </div>
+          <span class="expand-icon">{{ bucket.expanded ? '▼' : '▶' }}</span>
         </div>
 
-        <div class="incidents-list-vertical" *ngIf="group.expanded">
-          <div class="incident-item" *ngFor="let incident of group.incidents">
-            <span class="incident-number">{{ incident.incidentNumber }}</span>
-            <span class="urgency-badge" [ngClass]="'urgency-' + incident.urgency.toLowerCase()">
-              {{ incident.urgency }}
-            </span>
+        <div class="analyst-group-list" *ngIf="bucket.expanded">
+          <div class="analyst-group-card" *ngFor="let group of bucket.analysts">
+            <div class="group-header" (click)="toggleAnalystUrgentGroup(group)">
+              <div class="group-info">
+                <h3>👤 {{ group.analyst }}</h3>
+                <span class="badge badge-info">{{ group.count }} incidente{{ group.count !== 1 ? 's' : '' }}</span>
+              </div>
+              <div class="group-actions">
+                <button class="btn-copy-small" (click)="copyAnalystUrgentIncidents(group); $event.stopPropagation()">
+                  📋 Copiar Lista
+                </button>
+                <span class="expand-icon">{{ group.expanded ? '▼' : '▶' }}</span>
+              </div>
+            </div>
+
+            <div class="incidents-list-vertical" *ngIf="group.expanded">
+              <div class="incident-item" *ngFor="let incident of group.incidents">
+                <span class="incident-number">{{ incident.incidentNumber }}</span>
+                <span class="urgency-badge" [ngClass]="'urgency-' + incident.urgency.toLowerCase()">
+                  {{ incident.urgency }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

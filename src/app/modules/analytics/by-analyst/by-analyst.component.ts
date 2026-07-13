@@ -1,12 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
 import { IncidentService } from '../../../core/services/incident.service';
-import { NotionService, AnalystNotionData } from '../../../core/services/notion.service';
 import { ExportService } from '../../../core/services/export.service';
-import { Incident, IncidentPriority } from '../../../core/models/incident.model';
+import { Incident } from '../../../core/models/incident.model';
 import { buildIncidentsTsv } from '../../../core/utils/clipboard-table.util';
 import { evaluateIncidentSla, nowInBogota } from '../../../core/utils/business-hours.util';
+import { groupByGroupThenAnalyst } from '../../../core/utils/hierarchy.util';
 
 interface AnalystGroup {
   analyst: string;
@@ -15,22 +14,27 @@ interface AnalystGroup {
   expanded: boolean;
 }
 
+interface GroupBucket {
+  group: string;
+  analystGroups: AnalystGroup[];
+  count: number;
+  expanded: boolean;
+}
+
 @Component({
   selector: 'app-by-analyst',
   standalone: true,
-  imports: [CommonModule, HttpClientModule],
+  imports: [CommonModule],
   templateUrl: './by-analyst.component.html',
   styleUrls: ['./by-analyst.component.scss']
 })
 export class ByAnalystComponent implements OnInit {
-  analystGroups: AnalystGroup[] = [];
+  groupBuckets: GroupBucket[] = [];
   copiedMessage: string = '';
-  isSyncingNotion: boolean = false;
   private slaNow: Date = nowInBogota();
 
   constructor(
     private incidentService: IncidentService,
-    private notionService: NotionService,
     private exportService: ExportService
   ) {}
 
@@ -38,30 +42,33 @@ export class ByAnalystComponent implements OnInit {
     this.loadAnalystGroups();
   }
 
+  /** Todos los analistas de todos los grupos, aplanado para acciones globales */
+  get allAnalystGroups(): AnalystGroup[] {
+    return this.groupBuckets.flatMap(g => g.analystGroups);
+  }
+
   loadAnalystGroups(): void {
     this.incidentService.getOpenIncidentsObservable().subscribe(incidents => {
       this.slaNow = nowInBogota();
-      const groups = new Map<string, Incident[]>();
-      
-      incidents.forEach(incident => {
-        const analyst = incident.assignedAnalyst || 'Sin Asignar';
-        if (!groups.has(analyst)) {
-          groups.set(analyst, []);
-        }
-        groups.get(analyst)!.push(incident);
-      });
 
-      this.analystGroups = Array.from(groups.entries())
-        .map(([analyst, incidents]) => ({
-          analyst,
-          incidents: incidents.sort((a, b) => 
+      this.groupBuckets = groupByGroupThenAnalyst(incidents).map(groupNode => ({
+        group: groupNode.group,
+        count: groupNode.count,
+        expanded: false,
+        analystGroups: groupNode.analysts.map(analystNode => ({
+          analyst: analystNode.analyst,
+          incidents: analystNode.incidents.sort((a, b) =>
             new Date(a.openDate).getTime() - new Date(b.openDate).getTime()
           ),
-          count: incidents.length,
+          count: analystNode.count,
           expanded: false
         }))
-        .sort((a, b) => b.count - a.count);
+      }));
     });
+  }
+
+  toggleGroupBucket(bucket: GroupBucket): void {
+    bucket.expanded = !bucket.expanded;
   }
 
   toggleAnalystGroup(group: AnalystGroup): void {
@@ -82,55 +89,6 @@ export class ByAnalystComponent implements OnInit {
   exportAnalystToExcel(group: AnalystGroup): void {
     this.exportService.exportToExcel(group.incidents, `incidentes_${group.analyst.replace(/\s+/g, '_')}`);
   }
-
-  migrateToNotion(): void {
-    if (this.isSyncingNotion) return;
-
-    this.isSyncingNotion = true;
-    this.copiedMessage = '⏳ Migrando a Notion...';
-
-    const analystsData: AnalystNotionData[] = this.analystGroups.map(group => {
-      const priorityCounts = this.getPriorityCounts(group.incidents);
-      return {
-        analyst: group.analyst,
-        totalIncidents: group.count,
-        critical: priorityCounts.critical,
-        high: priorityCounts.high,
-        medium: priorityCounts.medium,
-        low: priorityCounts.low,
-        incidents: group.incidents.map(i => i.incidentNumber || '')
-      };
-    });
-
-    this.notionService.syncAnalystsToNotion(analystsData).subscribe({
-      next: (response) => {
-        this.isSyncingNotion = false;
-        this.copiedMessage = `✅ ${response.message}`;
-        setTimeout(() => {
-          this.copiedMessage = '';
-        }, 5000);
-      },
-      error: (error) => {
-        this.isSyncingNotion = false;
-        console.error('Error al migrar a Notion:', error);
-        this.copiedMessage = '❌ Error al migrar a Notion. Verifica la consola.';
-        setTimeout(() => {
-          this.copiedMessage = '';
-        }, 5000);
-      }
-    });
-  }
-
-  private getPriorityCounts(incidents: Incident[]): { critical: number, high: number, medium: number, low: number } {
-    return {
-      critical: incidents.filter(i => i.priority === IncidentPriority.CRITICAL).length,
-      high: incidents.filter(i => i.priority === IncidentPriority.HIGH).length,
-      medium: incidents.filter(i => i.priority === IncidentPriority.MEDIUM).length,
-      low: incidents.filter(i => i.priority === IncidentPriority.LOW).length
-    };
-  }
-
-
 
   formatDate(date: Date): string {
     if (!date) return '-';

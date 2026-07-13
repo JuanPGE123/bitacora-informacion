@@ -51,6 +51,50 @@ El sistema se abrirá en `http://localhost:4202`
 npm run build
 ```
 
+## 🧪 Entorno de Desarrollo Local (Dev/Staging)
+
+Esta app no tiene base de datos propia: los incidentes se procesan en memoria desde el Excel/CSV que subes,
+y el historial de subidas vive solo en `localStorage` del navegador. Lo único externo es la función
+serverless `api/notion-sync.ts`, que sincroniza analistas hacia una base de Notion usando 2 secrets
+(`NOTION_TOKEN`, `NOTION_DATABASE_ID`). Producción corre en dos despliegues separados: GitHub Pages
+(app estática, vía `.github/workflows/deploy.yml`) y Vercel (solo esa función).
+
+Para levantar un entorno local que **nunca** toque la Notion de producción:
+
+1. **Instala dependencias**
+   ```bash
+   npm install
+   ```
+
+2. **Crea una integración y base de datos de Notion de PRUEBA** (distinta de la real usada en producción).
+   Copia el archivo de ejemplo y completa tus credenciales de sandbox:
+   ```bash
+   cp .env.development.example .env.development.local
+   ```
+   Edita `.env.development.local` con el `NOTION_TOKEN` y `NOTION_DATABASE_ID` de esa base de prueba.
+   Este archivo está en `.gitignore`, nunca se sube al repo.
+
+3. **Levanta la función serverless localmente** (necesita Vercel CLI):
+   ```bash
+   npm install -g vercel
+   vercel dev
+   ```
+   Esto sirve `api/notion-sync.ts` en `http://localhost:3000`, leyendo las variables de
+   `.env.development.local`.
+
+4. **Levanta la app Angular** en otra terminal:
+   ```bash
+   npm start
+   ```
+   `src/environments/environment.ts` ya apunta a `http://localhost:3000/api/notion-sync`, así que el
+   botón "Migrar a Notion" usará tu base de prueba, no la real.
+
+5. Este flujo es completamente local: no publica nada en GitHub Pages ni en el proyecto de Vercel de
+   producción (esos usan sus propias variables de entorno configuradas en cada plataforma).
+
+Si no necesitas probar la sincronización con Notion, basta con el paso 4 (`npm start`) — el resto de la
+app (carga de archivos, dashboard, analítica) funciona sin la función serverless.
+
 ## 📁 Archivos de Ejemplo
 
 Se incluyen dos archivos CSV de ejemplo:

@@ -218,6 +218,89 @@ export class AnalyticsService {
   }
 
   /**
+   * Obtiene gráfico de volumen abiertos vs resueltos por grupo asignado (Barras)
+   */
+  getIncidentsByGroupChart(): Observable<ChartConfig> {
+    return this.kpiService.getGroupStats().pipe(
+      map(stats => {
+        const top10 = stats.slice(0, 10);
+
+        return {
+          type: 'bar' as ChartType,
+          data: {
+            labels: top10.map(s => s.group),
+            datasets: [
+              {
+                label: 'Abiertos',
+                data: top10.map(s => s.openIncidents),
+                backgroundColor: CHART_COLORS.warning,
+                borderColor: CHART_COLORS.warning,
+                borderWidth: 1
+              },
+              {
+                label: 'Resueltos',
+                data: top10.map(s => s.resolvedIncidents),
+                backgroundColor: CHART_COLORS.success,
+                borderColor: CHART_COLORS.success,
+                borderWidth: 1
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top'
+              },
+              title: {
+                display: true,
+                text: 'Volumen Abiertos vs Resueltos por Grupo'
+              }
+            }
+          }
+        };
+      })
+    );
+  }
+
+  /**
+   * Obtiene gráfico de cumplimiento de OLA (a tiempo vs vencidos) (Dona)
+   */
+  getSlaComplianceChart(): Observable<ChartConfig> {
+    return this.kpiService.getSlaComplianceStats().pipe(
+      map(stats => ({
+        type: 'doughnut' as ChartType,
+        data: {
+          labels: [`A tiempo (${stats.onTime})`, `Vencidos (${stats.overdue})`],
+          datasets: [{
+            label: 'Cumplimiento OLA',
+            data: [stats.onTime, stats.overdue],
+            backgroundColor: [CHART_COLORS.success, CHART_COLORS.danger],
+            borderColor: '#ffffff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'right'
+            },
+            title: {
+              display: true,
+              text: 'Cumplimiento de OLA'
+            }
+          }
+        }
+      }))
+    );
+  }
+
+  /**
    * Obtiene gráfico de distribución por categoría
    */
   getCategoryDistributionChart(): Observable<ChartConfig> {

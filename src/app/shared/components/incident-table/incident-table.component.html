@@ -52,7 +52,7 @@
 
   <!-- Table -->
   <div class="table-wrapper">
-    <table class="incident-table">
+    <table class="incidents-table">
       <thead>
         <tr>
           <th (click)="sortBy('id')" class="sortable">
@@ -110,7 +110,7 @@
           <td class="incident-id">{{ incident.incidentNumber }}</td>
           <td>{{ incident.assignedAnalyst || '-' }}</td>
           <td>
-            <span class="badge" [ngClass]="getPriorityClass(incident.priority)">
+            <span class="priority-badge" [ngClass]="getPriorityClass(incident.priority)">
               {{ incident.priority }}
             </span>
           </td>

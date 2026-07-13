@@ -5,6 +5,7 @@ import { ExportService } from '../../../core/services/export.service';
 import { Incident, IncidentUrgency } from '../../../core/models/incident.model';
 import { buildIncidentsTsv } from '../../../core/utils/clipboard-table.util';
 import { evaluateIncidentSla, nowInBogota } from '../../../core/utils/business-hours.util';
+import { groupByGroupThenAnalyst } from '../../../core/utils/hierarchy.util';
 
 interface ExternalTicketGroup {
   ticketName: string;
@@ -17,6 +18,13 @@ interface AnalystUrgentGroup {
   analyst: string;
   count: number;
   incidents: Incident[];
+  expanded: boolean;
+}
+
+interface GroupUrgentBucket {
+  group: string;
+  count: number;
+  analysts: AnalystUrgentGroup[];
   expanded: boolean;
 }
 
@@ -40,8 +48,8 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
   dynatraceCount: number = 0;
   dynatraceExpanded: boolean = false;
   
-  // Incidentes Urgentes que Cumplen ANS (Crítica y Alta)
-  urgentMeetsSLAGroups: AnalystUrgentGroup[] = [];
+  // Incidentes Urgentes que Cumplen ANS (Crítica y Alta), agrupados Grupo -> Analista
+  urgentMeetsSLABuckets: GroupUrgentBucket[] = [];
   urgentMeetsSLACount: number = 0;
   urgentMeetsSLAExpanded: boolean = false;
   
@@ -102,26 +110,20 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
         i.meetsSla === true
       );
       
-      const analystGroups = new Map<string, Incident[]>();
-      urgentMeetsSLA.forEach(incident => {
-        const analyst = incident.assignedAnalyst || 'Sin Asignar';
-        if (!analystGroups.has(analyst)) {
-          analystGroups.set(analyst, []);
-        }
-        analystGroups.get(analyst)!.push(incident);
-      });
-      
-      this.urgentMeetsSLAGroups = Array.from(analystGroups.entries())
-        .map(([analyst, incidents]) => ({
-          analyst,
-          count: incidents.length,
-          incidents: incidents.sort((a, b) => 
+      this.urgentMeetsSLABuckets = groupByGroupThenAnalyst(urgentMeetsSLA).map(groupNode => ({
+        group: groupNode.group,
+        count: groupNode.count,
+        expanded: false,
+        analysts: groupNode.analysts.map(analystNode => ({
+          analyst: analystNode.analyst,
+          count: analystNode.count,
+          incidents: analystNode.incidents.sort((a, b) =>
             (a.incidentNumber || '').localeCompare(b.incidentNumber || '')
           ),
           expanded: false
         }))
-        .sort((a, b) => b.count - a.count);
-      
+      }));
+
       this.urgentMeetsSLACount = urgentMeetsSLA.length;
       
       // 6. Filtrar incidentes reabiertos
@@ -148,8 +150,17 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
     this.urgentMeetsSLAExpanded = !this.urgentMeetsSLAExpanded;
   }
 
+  toggleUrgentBucket(bucket: GroupUrgentBucket): void {
+    bucket.expanded = !bucket.expanded;
+  }
+
   toggleAnalystUrgentGroup(group: AnalystUrgentGroup): void {
     group.expanded = !group.expanded;
+  }
+
+  /** Todos los analistas de todos los grupos, aplanado para acciones globales (copiar/exportar todo) */
+  get allUrgentAnalystGroups(): AnalystUrgentGroup[] {
+    return this.urgentMeetsSLABuckets.flatMap(b => b.analysts);
   }
 
   toggleReopened(): void {
@@ -188,7 +199,7 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
   }
 
   copyAllUrgentMeetsSLA(): void {
-    const allIncidents = this.urgentMeetsSLAGroups.flatMap(g => g.incidents);
+    const allIncidents = this.allUrgentAnalystGroups.flatMap(g => g.incidents);
     const tsv = buildIncidentsTsv(allIncidents.map(i => ({
       'No. Incidente': i.incidentNumber,
       'Analista': i.assignedAnalyst || 'Sin Asignar',
@@ -224,7 +235,7 @@ export class OpenIncidentsAnalyticsComponent implements OnInit {
   }
 
   exportUrgentMeetsSLAToExcel(): void {
-    const allIncidents = this.urgentMeetsSLAGroups.flatMap(g => g.incidents);
+    const allIncidents = this.allUrgentAnalystGroups.flatMap(g => g.incidents);
     this.exportService.exportToExcel(allIncidents, 'incidentes_urgentes_cumplen_ans');
   }
 

@@ -17,38 +17,8 @@
     ✅ {{ copiedMessage }}
   </div>
 
-  <div class="incidents-table-wrapper">
-    <table class="incidents-table">
-      <thead>
-        <tr>
-          <th>No. Incidente</th>
-          <th>External Ticket</th>
-          <th>Fecha Apertura</th>
-          <th>Bandeja</th>
-          <th>Analista</th>
-          <th>Prioridad</th>
-          <th>Estado SLA</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let incident of otherAnalystsIncidents">
-          <td>{{ incident.incidentNumber }}</td>
-          <td>{{ incident.externalTicket || 'Sin External Ticket' }}</td>
-          <td>{{ formatDate(incident.openDate) }}</td>
-          <td>{{ incident.assignedGroup || '-' }}</td>
-          <td>{{ incident.assignedAnalyst || '-' }}</td>
-          <td>
-            <span class="priority-badge" [class]="'priority-' + incident.priority.toLowerCase()">
-              {{ incident.priority }}
-            </span>
-          </td>
-          <td>
-            <span class="badge" [ngClass]="getSlaClass(incident)">
-              {{ getSlaLabel(incident) }}
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <app-group-analyst-tree
+    [groups]="groups"
+    emptyMessage="No hay incidentes fuera de las bandejas principales.">
+  </app-group-analyst-tree>
 </div>

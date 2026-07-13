@@ -2,7 +2,7 @@
   <div class="analytics-header-modern">
     <div class="header-top">
       <div class="header-title">
-        <h1>🕒 SLA y ANS Abiertos</h1>
+        <h1>🕒 OLA Abiertos</h1>
         <p class="subtitle">Cumplimiento de ANS en horas hábiles de Colombia (7:30am–5:00pm, Lun-Vie, sin festivos)</p>
       </div>
       <div class="header-actions">
@@ -53,6 +53,11 @@
         <option *ngFor="let priority of priorities" [value]="priority">{{ priority }}</option>
       </select>
 
+      <select class="filter-select" [(ngModel)]="selectedGroup" (ngModelChange)="onGroupChange()">
+        <option value="">Todos los grupos</option>
+        <option *ngFor="let group of groups" [value]="group">{{ group }}</option>
+      </select>
+
       <select class="filter-select" [(ngModel)]="selectedAnalyst" (ngModelChange)="applyFilters()">
         <option value="">Todos los analistas</option>
         <option *ngFor="let analyst of analysts" [value]="analyst">{{ analyst }}</option>
@@ -64,7 +69,7 @@
         <option value="atiempo">Solo a tiempo</option>
       </select>
 
-      <button class="btn-clear-filters" (click)="clearFilters()" *ngIf="searchText || selectedPriority || selectedAnalyst || selectedStatus">
+      <button class="btn-clear-filters" (click)="clearFilters()" *ngIf="searchText || selectedPriority || selectedGroup || selectedAnalyst || selectedStatus">
         Limpiar Filtros
       </button>
     </div>

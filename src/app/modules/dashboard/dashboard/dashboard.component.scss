@@ -21,7 +21,7 @@
   }
 
   .subtitle {
-    color: #64748b;
+    color: var(--text-secondary, #64748b);
     font-size: 1.125rem;
     font-weight: 500;
   }
@@ -46,7 +46,7 @@
 }
 
 .kpi-card {
-  background: white;
+  background: var(--bg-primary, white);
   border-radius: 1.25rem;
   padding: 2rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -107,7 +107,7 @@
 }
 
 .kpi-label {
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   font-size: 0.9375rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -337,8 +337,22 @@
   }
 }
 
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chart-panel {
+  background: var(--bg-primary, white);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
 .progress-section {
-  background: white;
+  background: var(--bg-primary, white);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -349,7 +363,7 @@
   justify-content: space-between;
   margin-bottom: 1rem;
   font-weight: 500;
-  color: #1f2937;
+  color: var(--text-primary, #1f2937);
 }
 
 .progress-value {
@@ -359,7 +373,7 @@
 
 .progress-bar {
   height: 24px;
-  background: #e5e7eb;
+  background: var(--bg-tertiary, #e5e7eb);
   border-radius: 12px;
   overflow: hidden;
 }
@@ -394,12 +408,12 @@
   h2 {
     font-size: 1.5rem;
     font-weight: 600;
-    color: #1f2937;
+    color: var(--text-primary, #1f2937);
     margin-bottom: 0.5rem;
   }
 
   p {
-    color: #6b7280;
+    color: var(--text-secondary, #6b7280);
   }
 }
 

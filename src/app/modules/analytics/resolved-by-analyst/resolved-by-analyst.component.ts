@@ -4,20 +4,28 @@ import { IncidentService } from '../../../core/services/incident.service';
 import { Incident } from '../../../core/models/incident.model';
 import { buildIncidentsTsv } from '../../../core/utils/clipboard-table.util';
 import { evaluateIncidentSla, nowInBogota } from '../../../core/utils/business-hours.util';
+import { groupByGroupThenAnalyst } from '../../../core/utils/hierarchy.util';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 
 Chart.register(...registerables);
 
-interface AnalystInfo {
-  analyst: string;
-  count: number;
+interface DateBucket {
+  date: string;
   incidents: Incident[];
+  count: number;
   expanded: boolean;
 }
 
-interface DateGroup {
-  date: string;
-  totalCount: number;
+interface AnalystInfo {
+  analyst: string;
+  count: number;
+  dateBuckets: DateBucket[];
+  expanded: boolean;
+}
+
+interface GroupBucket {
+  group: string;
+  count: number;
   analysts: AnalystInfo[];
   expanded: boolean;
 }
@@ -33,7 +41,7 @@ export class ResolvedByAnalystComponent implements OnInit, AfterViewInit {
   @ViewChild('analystChart') analystChartRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('dateChart') dateChartRef!: ElementRef<HTMLCanvasElement>;
   
-  dateGroups: DateGroup[] = [];
+  groupBuckets: GroupBucket[] = [];
   copiedMessage: string = '';
   private slaNow: Date = nowInBogota();
   private analystChart: Chart | null = null;
@@ -52,52 +60,40 @@ export class ResolvedByAnalystComponent implements OnInit, AfterViewInit {
   loadAnalystDateGroups(): void {
     this.incidentService.getResolvedIncidentsObservable().subscribe(incidents => {
       this.slaNow = nowInBogota();
-      // Primer agrupamiento: por fecha
-      const dateMap = new Map<string, Map<string, Incident[]>>();
-      
-      incidents.forEach(incident => {
-        if (incident.solutionDate) {
-          const date = this.formatDate(incident.solutionDate);
-          const analyst = incident.assignedAnalyst || 'Sin Asignar';
-          
-          if (!dateMap.has(date)) {
-            dateMap.set(date, new Map<string, Incident[]>());
-          }
-          
-          const analystMap = dateMap.get(date)!;
-          if (!analystMap.has(analyst)) {
-            analystMap.set(analyst, []);
-          }
-          
-          analystMap.get(analyst)!.push(incident);
-        }
-      });
+      const resolvedIncidents = incidents.filter(i => !!i.solutionDate);
 
-      // Convertir a estructura DateGroup
-      this.dateGroups = Array.from(dateMap.entries())
-        .map(([date, analystMap]) => {
-          const analysts: AnalystInfo[] = Array.from(analystMap.entries())
-            .map(([analyst, incidents]) => ({
-              analyst,
-              count: incidents.length,
-              incidents: incidents.sort((a, b) => 
+      this.groupBuckets = groupByGroupThenAnalyst(resolvedIncidents).map(groupNode => ({
+        group: groupNode.group,
+        count: groupNode.count,
+        expanded: false,
+        analysts: groupNode.analysts.map(analystNode => {
+          const dateMap = new Map<string, Incident[]>();
+          analystNode.incidents.forEach(incident => {
+            const date = this.formatDate(incident.solutionDate!);
+            if (!dateMap.has(date)) dateMap.set(date, []);
+            dateMap.get(date)!.push(incident);
+          });
+
+          const dateBuckets: DateBucket[] = Array.from(dateMap.entries())
+            .map(([date, incidents]) => ({
+              date,
+              incidents: incidents.sort((a, b) =>
                 (a.incidentNumber || '').localeCompare(b.incidentNumber || '')
               ),
+              count: incidents.length,
               expanded: false
             }))
-            .sort((a, b) => b.count - a.count); // Ordenar analistas por cantidad (mayor primero)
-          
-          const totalCount = analysts.reduce((sum, a) => sum + a.count, 0);
-          
+            .sort((a, b) => b.date.localeCompare(a.date)); // fecha más reciente primero
+
           return {
-            date,
-            totalCount,
-            analysts,
+            analyst: analystNode.analyst,
+            count: analystNode.count,
+            dateBuckets,
             expanded: false
           };
         })
-        .sort((a, b) => b.date.localeCompare(a.date)); // Ordenar fechas (más reciente primero)
-      
+      }));
+
       // Crear gráficas después de cargar los datos
       setTimeout(() => this.createCharts(), 100);
     });
@@ -111,10 +107,10 @@ export class ResolvedByAnalystComponent implements OnInit, AfterViewInit {
   private createAnalystChart(): void {
     if (!this.analystChartRef) return;
 
-    // Agrupar por analista
+    // Agrupar por analista (agregado informativo entre todos los grupos)
     const analystCounts = new Map<string, number>();
-    this.dateGroups.forEach(dateGroup => {
-      dateGroup.analysts.forEach(analystInfo => {
+    this.groupBuckets.forEach(bucket => {
+      bucket.analysts.forEach(analystInfo => {
         const current = analystCounts.get(analystInfo.analyst) || 0;
         analystCounts.set(analystInfo.analyst, current + analystInfo.count);
       });
@@ -168,10 +164,14 @@ export class ResolvedByAnalystComponent implements OnInit, AfterViewInit {
   private createDateChart(): void {
     if (!this.dateChartRef) return;
 
-    // Agrupar por fecha
+    // Agrupar por fecha (agregado informativo entre todos los grupos/analistas)
     const dateCounts = new Map<string, number>();
-    this.dateGroups.forEach(group => {
-      dateCounts.set(group.date, group.totalCount);
+    this.groupBuckets.forEach(bucket => {
+      bucket.analysts.forEach(analystInfo => {
+        analystInfo.dateBuckets.forEach(db => {
+          dateCounts.set(db.date, (dateCounts.get(db.date) || 0) + db.count);
+        });
+      });
     });
 
     const sortedDates = Array.from(dateCounts.entries())
@@ -227,23 +227,27 @@ export class ResolvedByAnalystComponent implements OnInit, AfterViewInit {
     this.dateChart = new Chart(this.dateChartRef.nativeElement, config);
   }
 
-  toggleDateGroup(group: DateGroup): void {
-    group.expanded = !group.expanded;
+  toggleGroupBucket(bucket: GroupBucket): void {
+    bucket.expanded = !bucket.expanded;
   }
 
   toggleAnalyst(analyst: AnalystInfo): void {
     analyst.expanded = !analyst.expanded;
   }
 
-  copyDateGroupIncidents(group: DateGroup): void {
-    const allIncidents = group.analysts.flatMap(a => a.incidents);
-    const text = this.formatIncidentsForCopy(allIncidents);
-    this.copyToClipboard(text, `Incidentes del ${group.date} copiados (${group.totalCount} total)`);
+  toggleDateBucket(bucket: DateBucket): void {
+    bucket.expanded = !bucket.expanded;
   }
 
-  copyAnalystIncidents(analyst: AnalystInfo, date: string): void {
-    const text = this.formatIncidentsForCopy(analyst.incidents);
-    this.copyToClipboard(text, `Incidentes de ${analyst.analyst} - ${date} copiados`);
+  copyAnalystIncidents(analyst: AnalystInfo): void {
+    const allIncidents = analyst.dateBuckets.flatMap(d => d.incidents);
+    const text = this.formatIncidentsForCopy(allIncidents);
+    this.copyToClipboard(text, `Incidentes de ${analyst.analyst} copiados (${analyst.count} total)`);
+  }
+
+  copyDateBucketIncidents(analyst: AnalystInfo, dateBucket: DateBucket): void {
+    const text = this.formatIncidentsForCopy(dateBucket.incidents);
+    this.copyToClipboard(text, `Incidentes de ${analyst.analyst} - ${dateBucket.date} copiados`);
   }
 
   private formatIncidentsForCopy(incidents: Incident[]): string {

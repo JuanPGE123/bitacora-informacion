@@ -1,0 +1,56 @@
+<div class="tree" *ngIf="groups.length > 0; else empty">
+  <div class="group-node" *ngFor="let g of groups">
+    <div class="group-row" (click)="toggleGroup(g.group)">
+      <span class="expand-icon">{{ isGroupExpanded(g.group) ? '▼' : '▶' }}</span>
+      <span class="node-icon">🗂️</span>
+      <span class="node-label">{{ g.group }}</span>
+      <span class="badge badge-group">{{ g.count }} incidente{{ g.count !== 1 ? 's' : '' }}</span>
+    </div>
+
+    <div class="analyst-list" *ngIf="isGroupExpanded(g.group)">
+      <div class="analyst-node" *ngFor="let a of g.analysts">
+        <div class="analyst-row" (click)="toggleAnalyst(g.group, a.analyst)">
+          <span class="expand-icon">{{ isAnalystExpanded(g.group, a.analyst) ? '▼' : '▶' }}</span>
+          <span class="node-icon">👤</span>
+          <span class="node-label">{{ a.analyst }}</span>
+          <span class="badge badge-analyst">{{ a.count }} incidente{{ a.count !== 1 ? 's' : '' }}</span>
+        </div>
+
+        <div class="incidents-wrapper" *ngIf="isAnalystExpanded(g.group, a.analyst)">
+          <table class="incidents-table">
+            <thead>
+              <tr>
+                <th>No. Incidente</th>
+                <th>External Ticket</th>
+                <th>Fecha Apertura</th>
+                <th>Prioridad</th>
+                <th>Estado SLA</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let incident of a.incidents">
+                <td>{{ incident.incidentNumber }}</td>
+                <td>{{ incident.externalTicket || 'Sin External Ticket' }}</td>
+                <td>{{ formatDate(incident.openDate) }}</td>
+                <td>
+                  <span class="priority-badge" [class]="'priority-' + incident.priority.toLowerCase()">
+                    {{ incident.priority }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="getSlaClass(incident)">
+                    {{ getSlaLabel(incident) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #empty>
+  <p class="empty-message">{{ emptyMessage }}</p>
+</ng-template>
