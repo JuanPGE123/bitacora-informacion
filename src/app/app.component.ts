@@ -88,6 +88,12 @@ export class AppComponent {
       active: false
     },
     {
+      path: '/comparativa',
+      icon: 'M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4 4m-4-4l4-4',
+      label: 'Comparativa',
+      active: false
+    },
+    {
       path: '/history',
       icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
       label: 'Historial',

@@ -1,0 +1,115 @@
+<div class="analytics-container">
+  <div class="analytics-header-modern">
+    <div class="header-top">
+      <div class="header-title">
+        <h1>🔀 Comparativa</h1>
+        <p class="subtitle">
+          Diferencial entre el archivo de Abiertos anterior y el más reciente cargado, con validación de cumplimiento OLA
+          para los incidentes que dejaron de aparecer (cerrados/resueltos entre versiones).
+        </p>
+      </div>
+    </div>
+
+    <div class="metrics-dashboard" *ngIf="comparison as c">
+      <div class="metric-card">
+        <div class="metric-icon">📂</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ c.previousFileCount }}</div>
+          <div class="metric-label">Archivo Anterior</div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">📁</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ c.newFileCount }}</div>
+          <div class="metric-label">Archivo Nuevo</div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">✅</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ c.closedIncidents.length }}</div>
+          <div class="metric-label">Incidentes Cerrados</div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">🟢</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ c.onTimeCount }}</div>
+          <div class="metric-label">A Tiempo</div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">🔴</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ c.overdueCount }}</div>
+          <div class="metric-label">Fuera de Tiempo</div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">📊</div>
+        <div class="metric-content">
+          <div class="metric-value">{{ c.compliancePercentage }}%</div>
+          <div class="metric-label">Cumplimiento OLA</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-card" *ngIf="!comparison">
+    <div class="empty-state">
+      <p>Aún no hay comparativa disponible.</p>
+      <p>Sube un archivo de <strong>Incidentes Abiertos</strong> en el módulo de Carga; en cuanto exista un archivo
+        anterior con el que compararlo, la comparativa se generará automáticamente aquí.</p>
+    </div>
+  </div>
+
+  <div class="section-card" *ngIf="comparison as c">
+    <h2 class="mb-2">Detalle de Incidentes Cerrados</h2>
+
+    <div class="incidents-table-wrapper">
+      <table class="incidents-table" *ngIf="c.closedIncidents.length > 0">
+        <thead>
+          <tr>
+            <th>No. Incidente</th>
+            <th>Resumen</th>
+            <th>Analista</th>
+            <th>Prioridad</th>
+            <th>Apertura</th>
+            <th>Cierre</th>
+            <th>Origen Fecha Cierre</th>
+            <th>Horas Hábiles</th>
+            <th>Umbral OLA</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of c.closedIncidents">
+            <td class="incident-number-cell">{{ row.incidentNumber }}</td>
+            <td>{{ row.summary }}</td>
+            <td>{{ row.assignedAnalyst || 'Sin Asignar' }}</td>
+            <td>
+              <span class="priority-badge" [ngClass]="'priority-' + row.priority.toLowerCase()">
+                {{ row.priority }}
+              </span>
+            </td>
+            <td>{{ formatDateTime(row.openDate) }}</td>
+            <td>{{ formatDateTime(row.closeDate) }}</td>
+            <td>{{ closeDateSourceLabel(row.closeDateSource) }}</td>
+            <td>{{ row.closeDate ? row.elapsedBusinessHours.toFixed(2) + 'h' : '—' }}</td>
+            <td>{{ row.thresholdHours }}h</td>
+            <td>
+              <span class="badge" [ngClass]="onTimeBadgeClass(row.onTime)">
+                {{ onTimeStatusLabel(row.onTime) }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="c.closedIncidents.length === 0">
+        <p>No se detectaron incidentes cerrados entre el archivo anterior y el nuevo.</p>
+      </div>
+    </div>
+  </div>
+</div>

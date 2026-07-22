@@ -32,10 +32,16 @@
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+
+  --font-body: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
 }
 
 body {
-  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.6;
   color: var(--text-primary);
@@ -47,6 +53,7 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   margin: 0;
+  font-family: var(--font-heading);
   font-weight: 700;
   letter-spacing: -0.025em;
   color: var(--text-primary);
@@ -181,6 +188,186 @@ button {
   &:active {
     transform: translateY(0);
   }
+}
+
+/* ==================== SISTEMA DE DISEÑO COMPARTIDO ==================== */
+/* Base (modo claro) para patrones reutilizados por los módulos de analítica:
+   contenedores, tarjetas de métricas, badges y tablas. Los overrides de modo
+   oscuro para estas mismas clases ya existen más abajo en body.dark-theme. */
+
+.analytics-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+}
+
+.analytics-header-modern {
+  margin-bottom: 1.5rem;
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+
+  h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .subtitle {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+}
+
+.metrics-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.metric-card,
+.section-card,
+.card,
+.kpi-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  .metric-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  .metric-value {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+
+  .metric-label {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+}
+
+.section-card {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.incidents-table-wrapper {
+  overflow-x: auto;
+}
+
+.incidents-table,
+.analysts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  thead {
+    background: var(--bg-tertiary);
+
+    th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-color);
+      white-space: nowrap;
+
+      &.sortable {
+        cursor: pointer;
+        user-select: none;
+      }
+    }
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.15s ease;
+
+    &:hover {
+      background: var(--bg-tertiary);
+    }
+  }
+
+  td {
+    padding: 0.75rem 1rem;
+    color: var(--text-primary);
+
+    &.incident-number-cell {
+      font-weight: 600;
+      color: var(--primary);
+    }
+  }
+}
+
+.empty-state {
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.badge-success { background: rgba(16, 185, 129, 0.12); color: var(--success-dark); }
+  &.badge-warning { background: rgba(245, 158, 11, 0.12); color: var(--warning-dark); }
+  &.badge-danger { background: rgba(239, 68, 68, 0.12); color: var(--danger-dark); }
+  &.badge-info { background: rgba(59, 130, 246, 0.12); color: var(--info-dark); }
+  &.badge-primary { background: rgba(79, 70, 229, 0.12); color: var(--primary); }
+  &.badge-neutral { background: var(--bg-tertiary); color: var(--text-secondary); }
+}
+
+.priority-badge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.priority-1-crítico, &.priority-critical { background: rgba(220, 38, 38, 0.12); color: var(--danger-dark); }
+  &.priority-2-alto, &.priority-high { background: rgba(245, 158, 11, 0.12); color: var(--warning-dark); }
+  &.priority-3-medio, &.priority-medium { background: rgba(59, 130, 246, 0.12); color: var(--info-dark); }
+  &.priority-4-bajo, &.priority-low { background: rgba(107, 114, 128, 0.12); color: var(--text-secondary); }
 }
 
 /* ==================== MODO OSCURO COMPLETO ==================== */

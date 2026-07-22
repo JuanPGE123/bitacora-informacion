@@ -63,20 +63,22 @@ export class IncidentService {
   }
 
   /**
-   * Agrega incidentes abiertos
+   * Reemplaza los incidentes abiertos con el dataset de un nuevo archivo cargado.
+   * Un archivo cargado representa el estado completo vigente, no un incremento:
+   * por eso reemplaza (no acumula) para que todos los módulos suscritos se
+   * actualicen de inmediato y de forma limpia, sin recargar la página.
    */
   addOpenIncidents(incidents: Incident[]): void {
-    const current = this.openIncidents$.value;
-    this.openIncidents$.next([...current, ...incidents]);
+    this.openIncidents$.next(incidents);
     this.updateAllIncidents();
   }
 
   /**
-   * Agrega incidentes resueltos
+   * Reemplaza los incidentes resueltos con el dataset de un nuevo archivo cargado
+   * (ver nota en addOpenIncidents).
    */
   addResolvedIncidents(incidents: Incident[]): void {
-    const current = this.resolvedIncidents$.value;
-    this.resolvedIncidents$.next([...current, ...incidents]);
+    this.resolvedIncidents$.next(incidents);
     this.updateAllIncidents();
   }
 

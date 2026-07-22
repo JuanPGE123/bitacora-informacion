@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FileParserService } from '../../../core/services/file-parser.service';
 import { IncidentService } from '../../../core/services/incident.service';
 import { FileHistoryService } from '../../../core/services/file-history.service';
+import { ComparisonService } from '../../../core/services/comparison.service';
 import { FileProcessResult } from '../../../core/models/incident.model';
 
 interface UploadSection {
@@ -44,7 +45,8 @@ export class FileUploadComponent {
   constructor(
     private fileParserService: FileParserService,
     private incidentService: IncidentService,
-    private fileHistoryService: FileHistoryService
+    private fileHistoryService: FileHistoryService,
+    private comparisonService: ComparisonService
   ) {}
 
   /**
@@ -156,13 +158,24 @@ export class FileUploadComponent {
     this.openIncidentsUpload.result = null;
 
     try {
+      // Snapshot del dataset anterior ANTES de reemplazarlo, para la Comparativa
+      const previousOpen = this.incidentService.getOpenIncidents();
+
       const result = await this.fileParserService.parseFile(this.openIncidentsUpload.file);
       this.openIncidentsUpload.result = result;
 
       if (result.success && result.incidents.length > 0) {
-        // Agregar incidentes abiertos al servicio
+        // Reemplaza el dataset de abiertos (todos los módulos suscritos se refrescan solos)
         this.incidentService.addOpenIncidents(result.incidents);
-        
+
+        if (previousOpen.length > 0) {
+          this.comparisonService.computeComparison(
+            previousOpen,
+            result.incidents,
+            this.incidentService.getResolvedIncidents()
+          );
+        }
+
         // Agregar al historial
         this.fileHistoryService.addFile(
           this.openIncidentsUpload.file,

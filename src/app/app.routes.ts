@@ -11,6 +11,7 @@ import { ResolvedByAnalystComponent } from './modules/analytics/resolved-by-anal
 import { FileHistoryComponent } from './modules/history/file-history/file-history.component';
 import { SlaOpenComponent } from './modules/analytics/sla-open/sla-open.component';
 import { SlaResolvedComponent } from './modules/analytics/sla-resolved/sla-resolved.component';
+import { ComparativaComponent } from './modules/comparativa/comparativa/comparativa.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
@@ -25,6 +26,7 @@ export const routes: Routes = [
   { path: 'analytics/resolved-by-analyst', component: ResolvedByAnalystComponent },
   { path: 'analytics/sla-open', component: SlaOpenComponent },
   { path: 'analytics/sla-resolved', component: SlaResolvedComponent },
+  { path: 'comparativa', component: ComparativaComponent },
   { path: 'history', component: FileHistoryComponent },
   { path: '**', redirectTo: '/dashboard' }
 ];
